@@ -13,6 +13,8 @@
     <!-- jsPDF & AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <!-- QRCode JS for Real QR Generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -36,12 +38,25 @@
             transform: translateY(-20px);
             opacity: 0;
         }
+
+        #qrcode-container img {
+            margin: 0 auto;
+            border: 8px solid white;
+            border-radius: 12px;
+        }
+
+        @media print {
+            header, nav, .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            body { background: white !important; color: black !important; }
+            .card-qr { border: none !important; box-shadow: none !important; }
+        }
     </style>
 </head>
 <body class="transition-theme">
     <div id="app" v-cloak :class="[theme.secondary, theme.text, 'min-h-screen relative']">
         
-        <!-- NOTIFICATION POPUP -->
+        <!-- NOTIFIKASI POPUP -->
         <transition name="slide-up">
             <div v-if="showNotification" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
                 <i data-lucide="check-circle" class="w-5 h-5"></i>
@@ -50,7 +65,7 @@
         </transition>
 
         <!-- HEADER -->
-        <header :class="[theme.primary, 'text-white shadow-lg sticky top-0 z-50 transition-theme']">
+        <header :class="[theme.primary, 'text-white shadow-lg sticky top-0 z-50 transition-theme no-print']">
             <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
                     <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-slate-900 font-bold">
@@ -59,7 +74,7 @@
                     <span class="text-xl font-bold tracking-tight">{{ weddingInfo.logoText }}</span>
                 </div>
 
-                <!-- Desktop Nav -->
+                <!-- Navigasi Desktop -->
                 <nav class="hidden md:flex space-x-6">
                     <button @click="activeTab = 'beranda'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'beranda'}">
                         <i data-lucide="home" class="w-4 h-4"></i> <span>Beranda</span>
@@ -89,14 +104,14 @@
             </div>
         </header>
 
-        <!-- MAIN CONTENT -->
+        <!-- KONTEN UTAMA -->
         <main class="max-w-6xl mx-auto p-4 md:p-8">
             
-            <!-- SECTION: BERANDA -->
-            <section v-if="activeTab === 'beranda'" class="space-y-8 animate-fadeIn">
+            <!-- SEKSI: BERANDA -->
+            <section v-if="activeTab === 'beranda'" class="space-y-8 animate-fadeIn no-print">
                 <div :class="[theme.card, 'p-10 rounded-3xl text-center shadow-xl border relative overflow-hidden transition-theme']">
                     <div class="relative z-10">
-                        <h2 :class="[theme.accent, 'text-sm uppercase tracking-[0.3em] mb-4 font-semibold']">Welcome to Our Wedding</h2>
+                        <h2 :class="[theme.accent, 'text-sm uppercase tracking-[0.3em] mb-4 font-semibold']">Selamat Datang di Pernikahan Kami</h2>
                         <h1 class="text-5xl md:text-7xl font-serif mb-6">{{ weddingInfo.mempelai }}</h1>
                         <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-lg">
                             <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-5 h-5"></i> {{ weddingInfo.tanggal }}</span>
@@ -130,8 +145,8 @@
                 </div>
             </section>
 
-            <!-- SECTION: CHECKIN MANUAL -->
-            <section v-if="activeTab === 'checkin'" class="space-y-8 animate-fadeIn">
+            <!-- SEKSI: CHECKIN MANUAL -->
+            <section v-if="activeTab === 'checkin'" class="space-y-8 animate-fadeIn no-print">
                 <div class="max-w-2xl mx-auto">
                     <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme']">
                         <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
@@ -169,7 +184,7 @@
                     </div>
                 </div>
 
-                <!-- LIVE PREVIEW TABLE -->
+                <!-- TABEL PREVIEW LANGSUNG -->
                 <div v-if="guests.length > 0" class="space-y-4">
                     <h3 class="text-xl font-bold flex items-center gap-2">
                         <i data-lucide="history" class="w-5 h-5 opacity-50"></i> Tamu Baru Saja Terinput
@@ -199,24 +214,28 @@
                 </div>
             </section>
 
-            <!-- SECTION: QR CODE -->
+            <!-- SEKSI: QR CODE (DITINGKATKAN) -->
             <section v-if="activeTab === 'qr'" class="max-w-lg mx-auto text-center animate-fadeIn">
-                <div :class="[theme.card, 'p-10 rounded-3xl shadow-2xl border transition-theme space-y-6']">
-                    <h2 class="text-3xl font-serif">Self Registration</h2>
-                    <p class="text-slate-500">Scan QR ini untuk tamu registrasi mandiri</p>
-                    <div class="bg-white p-6 rounded-2xl border-4 border-slate-100 inline-block mx-auto">
-                        <svg width="180" height="180" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" :class="theme.accent">
-                            <rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><rect x="14" y="14" width="3" height="3"></rect><rect x="19" y="19" width="2" height="2"></rect><path d="M7 7h.01M17 7h.01M7 17h.01"></path>
-                        </svg>
+                <div :class="[theme.card, 'p-10 rounded-3xl shadow-2xl border transition-theme space-y-6 card-qr']">
+                    <h2 class="text-4xl font-serif">Self Registration</h2>
+                    <p class="text-slate-500">Scan QR Code di bawah ini untuk mengisi buku tamu digital secara mandiri.</p>
+                    
+                    <!-- Kontainer QR Code Asli -->
+                    <div class="bg-slate-100 p-8 rounded-2xl inline-block mx-auto shadow-inner border border-slate-200">
+                        <div id="qrcode-container" class="bg-white p-4 rounded-lg shadow-sm"></div>
                     </div>
-                    <button @click="window.print()" class="block mx-auto text-sm text-slate-400 hover:text-slate-600">
-                        Cetak QR Code
-                    </button>
+
+                    <div class="pt-4 space-y-2 no-print">
+                        <p class="text-xs text-slate-400 font-medium">Tips: Pastikan layar dalam keadaan terang atau cetak QR ini untuk diletakkan di meja registrasi.</p>
+                        <button @click="window.print()" :class="[theme.button, 'text-white px-8 py-3 rounded-full flex items-center gap-2 mx-auto font-bold shadow-lg']">
+                            <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Code
+                        </button>
+                    </div>
                 </div>
             </section>
 
-            <!-- SECTION: DATABASE ADMIN -->
-            <section v-if="activeTab === 'database'" class="space-y-6 animate-fadeIn">
+            <!-- SEKSI: DATABASE ADMIN -->
+            <section v-if="activeTab === 'database'" class="space-y-6 animate-fadeIn no-print">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h2 class="text-2xl font-bold">Data Lengkap Tamu</h2>
                     <div class="flex flex-wrap gap-2">
@@ -226,7 +245,7 @@
                     </div>
                 </div>
 
-                <!-- FILTER TABS WITH COUNTS -->
+                <!-- FILTER TABS DENGAN JUMLAH -->
                 <div class="flex overflow-x-auto pb-4 gap-2 no-scrollbar border-b border-slate-100">
                     <button @click="dbFilter = 'all'" 
                         :class="[dbFilter === 'all' ? theme.primary + ' text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50', 'px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2']">
@@ -276,14 +295,10 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="flex justify-between items-center px-4">
-                    <p class="text-[10px] text-slate-400 italic font-medium">* Menampilkan data terbaru secara real-time</p>
-                    <p class="text-xs font-bold text-slate-500">Total Filter: {{ filteredGuests.length }} Tamu</p>
-                </div>
             </section>
 
-            <!-- SECTION: PENGATURAN -->
-            <section v-if="activeTab === 'pengaturan'" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn">
+            <!-- SEKSI: PENGATURAN -->
+            <section v-if="activeTab === 'pengaturan'" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn no-print">
                 <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
                     <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="settings" :class="theme.accent"></i> Kategori & Kuota</h3>
                     <div>
@@ -319,7 +334,7 @@
 
         </main>
 
-        <footer class="mt-12 py-8 border-t border-slate-200 text-center text-slate-400 text-xs">
+        <footer class="mt-12 py-8 border-t border-slate-200 text-center text-slate-400 text-xs no-print">
             &copy; 2025 {{ weddingInfo.logoText }} - Professional Wedding Solutions
         </footer>
     </div>
@@ -397,6 +412,25 @@
                     return guests.value.filter(g => g.kategori === dbFilter.value);
                 });
 
+                // Fungsi untuk menghasilkan QR Code yang terbaca
+                const generateQRCode = () => {
+                    nextTick(() => {
+                        const container = document.getElementById("qrcode-container");
+                        if (!container) return;
+                        container.innerHTML = ""; // Bersihkan kontainer
+                        
+                        // Menghasilkan QR Code nyata
+                        new QRCode(container, {
+                            text: window.location.href, // Menggunakan URL saat ini sebagai data
+                            width: 256,
+                            height: 256,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                    });
+                };
+
                 const playNotificationSound = () => {
                     try {
                         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -459,12 +493,11 @@
                     if (dbFilter.value === cat) dbFilter.value = 'all';
                 };
 
-                // UPDATED PDF EXPORT: Per Kategori & Urutan
+                // EKSPOR PDF: Per Kategori & Berurutan
                 const exportToPDF = () => {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
-                    // Header PDF
                     doc.setFontSize(18);
                     doc.setTextColor(40);
                     doc.text(`LAPORAN TAMU: ${weddingInfo.mempelai.toUpperCase()}`, 14, 15);
@@ -473,7 +506,6 @@
                     doc.setTextColor(100);
                     doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 22);
 
-                    // 1. RINGKASAN STATISTIK (DI ATAS SENDIRI)
                     const statsRows = [
                         ['Total Tamu Terdaftar', guests.value.length.toString()],
                         ...statsPerCategory.value.map(s => [`Kategori: ${s.name}`, s.count.toString()])
@@ -490,11 +522,8 @@
 
                     let finalY = doc.lastAutoTable.finalY + 15;
 
-                    // 2. TABEL PER KATEGORI (BERURUTAN)
-                    // Kita mulai dengan kategori yang dipilih atau semua jika "all"
                     const categoriesToExport = dbFilter.value === 'all' ? categories.value : [dbFilter.value];
                     
-                    // Tambahkan teks pembuka detail
                     doc.setFontSize(14);
                     doc.setTextColor(40);
                     doc.text('Detail Data Tamu', 14, finalY);
@@ -504,7 +533,6 @@
                         const catGuests = guests.value.filter(g => g.kategori === catName);
                         
                         if (catGuests.length > 0) {
-                            // Beri jarak antar tabel jika bukan tabel pertama
                             if (finalY > 240) { doc.addPage(); finalY = 20; }
 
                             doc.setFontSize(11);
@@ -534,7 +562,14 @@
                     lucide.createIcons();
                 });
 
-                watch([activeTab, dbFilter], () => {
+                watch(activeTab, (newTab) => {
+                    if (newTab === 'qr') {
+                        generateQRCode();
+                    }
+                    nextTick(() => lucide.createIcons());
+                });
+
+                watch(dbFilter, () => {
                     nextTick(() => lucide.createIcons());
                 });
 
