@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARinvitation - Digital Wedding Guestbook</title>
+    <title>ARinvitation - Buku Tamu Digital</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue JS -->
@@ -13,7 +13,7 @@
     <!-- jsPDF & AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <!-- QRCode JS for Real QR Generation -->
+    <!-- QRCode JS -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
@@ -26,76 +26,56 @@
         
         .transition-theme { transition: all 0.5s ease; }
 
-        /* Animation for notification */
-        .slide-up-enter-active, .slide-up-leave-active {
-            transition: all 0.3s ease-out;
-        }
-        .slide-up-enter-from {
-            transform: translateY(20px);
-            opacity: 0;
-        }
-        .slide-up-leave-to {
-            transform: translateY(-20px);
-            opacity: 0;
-        }
-
         #qrcode-container img {
             margin: 0 auto;
             border: 8px solid white;
             border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
+
+        .slide-up-enter-active, .slide-up-leave-active {
+            transition: all 0.3s ease-out;
+        }
+        .slide-up-enter-from { transform: translateY(20px); opacity: 0; }
+        .slide-up-leave-to { transform: translateY(-20px); opacity: 0; }
 
         @media print {
             header, nav, .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white !important; color: black !important; }
-            .card-qr { border: none !important; box-shadow: none !important; }
         }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="transition-theme">
     <div id="app" v-cloak :class="[theme.secondary, theme.text, 'min-h-screen relative']">
         
-        <!-- NOTIFIKASI POPUP -->
+        <!-- NOTIFIKASI -->
         <transition name="slide-up">
             <div v-if="showNotification" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
                 <i data-lucide="check-circle" class="w-5 h-5"></i>
-                <span class="font-bold">Tamu Berhasil Terdaftar!</span>
+                <span class="font-bold">Data Berhasil Disimpan!</span>
             </div>
         </transition>
 
         <!-- HEADER -->
-        <header :class="[theme.primary, 'text-white shadow-lg sticky top-0 z-50 transition-theme no-print']">
+        <header v-if="!isSelfCheckIn" :class="[theme.primary, 'text-white shadow-lg sticky top-0 z-50 transition-theme no-print']">
             <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
-                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-slate-900 font-bold">
-                        AR
-                    </div>
+                    <div class="w-8 h-8 bg-white rounded-full flex items-center justify-center text-slate-900 font-bold">AR</div>
                     <span class="text-xl font-bold tracking-tight">{{ weddingInfo.logoText }}</span>
                 </div>
 
-                <!-- Navigasi Desktop -->
                 <nav class="hidden md:flex space-x-6">
                     <button @click="activeTab = 'beranda'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'beranda'}">
                         <i data-lucide="home" class="w-4 h-4"></i> <span>Beranda</span>
                     </button>
-                    
-                    <div class="relative group">
-                        <button class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': ['checkin', 'qr'].includes(activeTab)}">
-                            <i data-lucide="user-plus" class="w-4 h-4"></i> <span>Check-in</span> <i data-lucide="chevron-down" class="w-3 h-3"></i>
-                        </button>
-                        <div class="absolute top-full right-0 w-48 bg-white text-slate-800 rounded-md shadow-xl py-2 hidden group-hover:block border border-slate-100">
-                            <button @click="activeTab = 'checkin'" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center space-x-2">
-                                <i data-lucide="user-plus" class="w-4 h-4 text-slate-500"></i> <span>Manual</span>
-                            </button>
-                            <button @click="activeTab = 'qr'" class="w-full text-left px-4 py-2 hover:bg-slate-100 flex items-center space-x-2">
-                                <i data-lucide="qr-code" class="w-4 h-4 text-slate-500"></i> <span>QR Code</span>
-                            </button>
-                        </div>
-                    </div>
-
+                    <button @click="activeTab = 'registrasi'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'registrasi'}">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> <span>Registrasi</span>
+                    </button>
                     <button @click="activeTab = 'database'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'database'}">
-                        <i data-lucide="database" class="w-4 h-4"></i> <span>Admin</span>
+                        <i data-lucide="database" class="w-4 h-4"></i> <span>Laporan Lengkap</span>
                     </button>
                     <button @click="activeTab = 'pengaturan'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'pengaturan'}">
                         <i data-lucide="settings" class="w-4 h-4"></i> <span>Pengaturan</span>
@@ -104,20 +84,60 @@
             </div>
         </header>
 
-        <!-- KONTEN UTAMA -->
         <main class="max-w-6xl mx-auto p-4 md:p-8">
             
-            <!-- SEKSI: BERANDA -->
-            <section v-if="activeTab === 'beranda'" class="space-y-8 animate-fadeIn no-print">
+            <!-- MODE CHECK-IN MANDIRI -->
+            <section v-if="isSelfCheckIn" class="animate-fadeIn py-10">
+                <div class="max-w-xl mx-auto">
+                    <div class="text-center mb-10">
+                        <h1 class="text-3xl font-serif mb-2">{{ weddingInfo.mempelai }}</h1>
+                        <p class="text-slate-500 italic">Selamat Datang di Acara Pernikahan Kami</p>
+                    </div>
+                    
+                    <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border']">
+                        <h2 class="text-xl font-bold mb-6 text-center">Formulir Buku Tamu</h2>
+                        <form @submit.prevent="submitGuest" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Nama Lengkap</label>
+                                <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ketik nama..." />
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">WhatsApp</label>
+                                    <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">Kategori</label>
+                                    <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
+                                        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
+                                <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Asal kota/instansi..." />
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
+                                <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tulis doa restu..."></textarea>
+                            </div>
+                            <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg']">
+                                Kirim Kedatangan
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BERANDA -->
+            <section v-if="!isSelfCheckIn && activeTab === 'beranda'" class="space-y-8 animate-fadeIn no-print">
                 <div :class="[theme.card, 'p-10 rounded-3xl text-center shadow-xl border relative overflow-hidden transition-theme']">
-                    <div class="relative z-10">
-                        <h2 :class="[theme.accent, 'text-sm uppercase tracking-[0.3em] mb-4 font-semibold']">Selamat Datang di Pernikahan Kami</h2>
-                        <h1 class="text-5xl md:text-7xl font-serif mb-6">{{ weddingInfo.mempelai }}</h1>
-                        <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-lg">
-                            <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-5 h-5"></i> {{ weddingInfo.tanggal }}</span>
-                            <span class="hidden md:block">|</span>
-                            <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5"></i> {{ weddingInfo.lokasi }}</span>
-                        </div>
+                    <h2 :class="[theme.accent, 'text-sm uppercase tracking-[0.3em] mb-4 font-semibold']">Wedding Reception</h2>
+                    <h1 class="text-5xl md:text-7xl font-serif mb-6">{{ weddingInfo.mempelai }}</h1>
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-lg">
+                        <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-5 h-5"></i> {{ weddingInfo.tanggal }}</span>
+                        <span class="hidden md:block">|</span>
+                        <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5"></i> {{ weddingInfo.lokasi }}</span>
                     </div>
                 </div>
 
@@ -128,16 +148,16 @@
                             <span class="text-2xl font-black">{{ maxGuests }}</span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                            <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: progressWidth + '%' }"></div>
+                            <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: (guests.length / maxGuests * 100) + '%' }"></div>
                         </div>
                         <p class="mt-2 text-sm text-slate-500 text-right">Terisi: {{ guests.length }} Tamu</p>
                     </div>
 
                     <div :class="[theme.card, 'md:col-span-2 p-6 rounded-2xl shadow-md border transition-theme']">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="check-circle" :class="theme.accent"></i> Statistik Kategori</h3>
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" :class="theme.accent"></i> Ringkasan Kedatangan</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div v-for="cat in statsPerCategory" :key="cat.name" class="bg-black bg-opacity-5 p-3 rounded-xl border border-black border-opacity-5 cursor-pointer hover:bg-opacity-10 transition-all" @click="setFilterAndGo(cat.name)">
-                                <p class="text-xs text-slate-500 font-medium uppercase">{{ cat.name }}</p>
+                            <div v-for="cat in statsPerCategory" :key="cat.name" class="bg-black bg-opacity-5 p-3 rounded-xl border border-black border-opacity-5">
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">{{ cat.name }}</p>
                                 <p class="text-xl font-bold">{{ cat.count }}</p>
                             </div>
                         </div>
@@ -145,68 +165,102 @@
                 </div>
             </section>
 
-            <!-- SEKSI: CHECKIN MANUAL -->
-            <section v-if="activeTab === 'checkin'" class="space-y-8 animate-fadeIn no-print">
-                <div class="max-w-2xl mx-auto">
-                    <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme']">
-                        <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                            <i data-lucide="user-plus" :class="theme.accent"></i> Registrasi Tamu Baru
-                        </h2>
-                        <form @submit.prevent="submitGuest" class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Nama Lengkap</label>
-                                <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-300" placeholder="Nama tamu..." />
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- REGISTRASI + QR + DATABASE TERINTEGRASI -->
+            <section v-if="!isSelfCheckIn && activeTab === 'registrasi'" class="space-y-8 animate-fadeIn">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    
+                    <!-- FORM INPUT (SISI KIRI) -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme no-print']">
+                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
+                                <i data-lucide="edit-3" :class="theme.accent"></i> Registrasi Tamu
+                            </h2>
+                            <form @submit.prevent="submitGuest" class="space-y-4">
                                 <div>
-                                    <label class="block text-sm font-medium mb-1">Nomor HP / WhatsApp</label>
-                                    <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-300" placeholder="08xx..." />
+                                    <label class="block text-sm font-semibold mb-1">Nama Tamu</label>
+                                    <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ketik nama lengkap..." />
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-1">WhatsApp</label>
+                                        <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold mb-1">Kategori</label>
+                                        <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
+                                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                                        </select>
+                                    </div>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium mb-1">Kategori</label>
-                                    <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
-                                        <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                                    </select>
+                                    <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
+                                    <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Kota atau asal instansi..." />
                                 </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
+                                    <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tuliskan doa restu..."></textarea>
+                                </div>
+                                <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95']">
+                                    Simpan Kedatangan
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- QR CODE (SISI KANAN) -->
+                    <div class="space-y-6">
+                        <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border text-center transition-theme relative overflow-hidden']">
+                            <h3 class="text-xl font-bold mb-2">Self Check-in</h3>
+                            <p class="text-[10px] text-slate-500 mb-6 font-medium uppercase tracking-widest">Scan QR untuk Isi Mandiri</p>
+                            
+                            <div class="bg-slate-50 p-4 rounded-2xl inline-block mx-auto border border-slate-200 mb-4">
+                                <div id="qrcode-container" class="bg-white p-2 rounded-lg"></div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Alamat / Instansi</label>
-                                <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none" placeholder="Kota/Instansi..." />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-1">Ucapan & Doa</label>
-                                <textarea v-model="form.ucapan" rows="2" class="w-full p-3 rounded-lg border border-slate-200 outline-none" placeholder="Tulis doa..."></textarea>
-                            </div>
-                            <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg transition-transform active:scale-95']">
-                                Simpan & Daftarkan Tamu
+                            
+                            <button @click="window.print()" :class="[theme.button, 'w-full py-3 text-white rounded-lg flex items-center justify-center gap-2 font-bold no-print shadow-md']">
+                                <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Meja
                             </button>
-                        </form>
+                        </div>
                     </div>
                 </div>
 
-                <!-- TABEL PREVIEW LANGSUNG -->
-                <div v-if="guests.length > 0" class="space-y-4">
-                    <h3 class="text-xl font-bold flex items-center gap-2">
-                        <i data-lucide="history" class="w-5 h-5 opacity-50"></i> Tamu Baru Saja Terinput
-                    </h3>
-                    <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-                        <table class="w-full text-left">
-                            <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-400 font-bold">
+                <!-- DATABASE DI MENU REGISTRASI -->
+                <div :class="[theme.card, 'p-6 rounded-2xl shadow-lg border no-print mt-8']">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i data-lucide="list" class="w-5 h-5 text-slate-400"></i> Database Kedatangan Terkini
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <select v-model="regFilter" class="text-xs p-2 border rounded-lg bg-white outline-none">
+                                <option value="all">Semua Kategori</option>
+                                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-100">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px]">
                                 <tr>
                                     <th class="p-4">Waktu</th>
-                                    <th class="p-4">Nama</th>
-                                    <th class="p-4">WhatsApp</th>
+                                    <th class="p-4">Nama Tamu</th>
                                     <th class="p-4">Kategori</th>
-                                    <th class="p-4">Alamat</th>
+                                    <th class="p-4">Ucapan</th>
+                                    <th class="p-4 text-center">Hapus</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                <tr v-for="g in guests.slice(0, 5)" :key="g.id" class="animate-fadeIn">
-                                    <td class="p-4 text-sm">{{ g.time }}</td>
+                            <tbody class="divide-y divide-slate-50">
+                                <tr v-for="g in paginatedRegGuests" :key="g.id" class="hover:bg-slate-50">
+                                    <td class="p-4 text-slate-400 font-mono text-xs">{{ g.time }}</td>
                                     <td class="p-4 font-bold">{{ g.nama }}</td>
-                                    <td class="p-4 text-sm text-blue-600">{{ g.hp }}</td>
-                                    <td class="p-4"><span :class="[theme.primary, 'px-2 py-0.5 rounded-full text-[10px] text-white font-bold']">{{ g.kategori }}</span></td>
-                                    <td class="p-4 text-sm text-slate-500">{{ g.alamat || '-' }}</td>
+                                    <td class="p-4"><span :class="[theme.primary, 'px-2 py-0.5 rounded text-[9px] text-white font-bold uppercase']">{{ g.kategori }}</span></td>
+                                    <td class="p-4 text-slate-500 italic truncate max-w-[200px]">{{ g.ucapan || '-' }}</td>
+                                    <td class="p-4 text-center">
+                                        <button @click="deleteGuest(g.id)" class="text-red-300 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+                                    </td>
+                                </tr>
+                                <tr v-if="paginatedRegGuests.length === 0">
+                                    <td colspan="5" class="p-8 text-center text-slate-300 italic text-xs">Belum ada data kedatangan.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -214,82 +268,49 @@
                 </div>
             </section>
 
-            <!-- SEKSI: QR CODE (DITINGKATKAN) -->
-            <section v-if="activeTab === 'qr'" class="max-w-lg mx-auto text-center animate-fadeIn">
-                <div :class="[theme.card, 'p-10 rounded-3xl shadow-2xl border transition-theme space-y-6 card-qr']">
-                    <h2 class="text-4xl font-serif">Self Registration</h2>
-                    <p class="text-slate-500">Scan QR Code di bawah ini untuk mengisi buku tamu digital secara mandiri.</p>
-                    
-                    <!-- Kontainer QR Code Asli -->
-                    <div class="bg-slate-100 p-8 rounded-2xl inline-block mx-auto shadow-inner border border-slate-200">
-                        <div id="qrcode-container" class="bg-white p-4 rounded-lg shadow-sm"></div>
-                    </div>
-
-                    <div class="pt-4 space-y-2 no-print">
-                        <p class="text-xs text-slate-400 font-medium">Tips: Pastikan layar dalam keadaan terang atau cetak QR ini untuk diletakkan di meja registrasi.</p>
-                        <button @click="window.print()" :class="[theme.button, 'text-white px-8 py-3 rounded-full flex items-center gap-2 mx-auto font-bold shadow-lg']">
-                            <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Code
-                        </button>
-                    </div>
-                </div>
-            </section>
-
-            <!-- SEKSI: DATABASE ADMIN -->
-            <section v-if="activeTab === 'database'" class="space-y-6 animate-fadeIn no-print">
+            <!-- LAPORAN LENGKAP ADMIN -->
+            <section v-if="!isSelfCheckIn && activeTab === 'database'" class="space-y-6 animate-fadeIn no-print">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <h2 class="text-2xl font-bold">Data Lengkap Tamu</h2>
-                    <div class="flex flex-wrap gap-2">
-                        <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 transition-all text-sm shadow-sm">
-                            <i data-lucide="download" class="w-4 h-4"></i> Ekspor PDF Laporan
+                    <h2 class="text-2xl font-bold">Laporan Kedatangan</h2>
+                    <div class="flex gap-2">
+                        <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-md">
+                            <i data-lucide="file-down" class="w-4 h-4"></i> Cetak PDF (Grup Kategori)
                         </button>
                     </div>
                 </div>
 
-                <!-- FILTER TABS DENGAN JUMLAH -->
-                <div class="flex overflow-x-auto pb-4 gap-2 no-scrollbar border-b border-slate-100">
-                    <button @click="dbFilter = 'all'" 
-                        :class="[dbFilter === 'all' ? theme.primary + ' text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50', 'px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2']">
-                        Semua Tamu
-                        <span :class="[dbFilter === 'all' ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-500', 'px-2 py-0.5 rounded-full text-[10px]']">{{ guests.length }}</span>
+                <div class="flex overflow-x-auto pb-2 gap-2 no-scrollbar border-b border-slate-100">
+                    <button @click="dbFilter = 'all'" :class="[dbFilter === 'all' ? theme.primary + ' text-white' : 'bg-white border text-slate-500', 'px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition-all']">
+                        Semua ({{ guests.length }})
                     </button>
-                    <button v-for="cat in statsPerCategory" :key="cat.name" @click="dbFilter = cat.name" 
-                        :class="[dbFilter === cat.name ? theme.primary + ' text-white shadow-md' : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50', 'px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all flex items-center gap-2']">
-                        {{ cat.name }}
-                        <span :class="[dbFilter === cat.name ? 'bg-white text-slate-900' : 'bg-slate-100 text-slate-500', 'px-2 py-0.5 rounded-full text-[10px]']">{{ cat.count }}</span>
+                    <button v-for="cat in statsPerCategory" :key="cat.name" @click="dbFilter = cat.name" :class="[dbFilter === cat.name ? theme.primary + ' text-white' : 'bg-white border text-slate-500', 'px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition-all']">
+                        {{ cat.name }} ({{ cat.count }})
                     </button>
                 </div>
 
-                <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <table class="w-full text-left">
-                        <thead class="bg-slate-50 border-b border-slate-200 text-xs uppercase text-slate-400 font-bold">
+                        <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-400 font-bold">
                             <tr>
-                                <th class="p-4 w-32"><div class="flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> Waktu</div></th>
-                                <th class="p-4">Nama</th>
+                                <th class="p-4 w-12">No</th>
+                                <th class="p-4">Waktu</th>
+                                <th class="p-4">Nama Tamu</th>
                                 <th class="p-4">WhatsApp</th>
                                 <th class="p-4">Kategori</th>
-                                <th class="p-4">Alamat</th>
                                 <th class="p-4 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            <tr v-for="g in filteredGuests" :key="g.id" class="hover:bg-slate-50 transition-colors">
-                                <td class="p-4 text-xs font-medium text-slate-400">{{ g.time }}</td>
+                            <tr v-for="(g, index) in filteredGuests" :key="g.id" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4 text-xs font-bold text-slate-300">{{ index + 1 }}</td>
+                                <td class="p-4 text-xs text-slate-400 whitespace-nowrap">{{ g.time }}</td>
                                 <td class="p-4 font-bold">{{ g.nama }}</td>
                                 <td class="p-4 text-sm font-mono text-slate-600">{{ g.hp }}</td>
-                                <td class="p-4"><span :class="[theme.primary, 'px-3 py-1 rounded-full text-[10px] text-white font-bold uppercase']">{{ g.kategori }}</span></td>
-                                <td class="p-4 text-sm text-slate-500">{{ g.alamat || '-' }}</td>
+                                <td class="p-4"><span :class="[theme.primary, 'px-2 py-0.5 rounded text-[10px] text-white font-bold uppercase']">{{ g.kategori }}</span></td>
                                 <td class="p-4 text-center">
-                                    <button @click="deleteGuest(g.id)" class="text-red-400 hover:text-red-600 transition-colors p-1">
+                                    <button @click="deleteGuest(g.id)" class="text-red-300 hover:text-red-600 transition-all p-1">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
-                                </td>
-                            </tr>
-                            <tr v-if="filteredGuests.length === 0">
-                                <td colspan="6" class="p-20 text-center text-slate-400 italic">
-                                    <div class="flex flex-col items-center gap-2">
-                                        <i data-lucide="user-x" class="w-8 h-8 opacity-20"></i>
-                                        <span>Tidak ada tamu ditemukan.</span>
-                                    </div>
                                 </td>
                             </tr>
                         </tbody>
@@ -297,35 +318,34 @@
                 </div>
             </section>
 
-            <!-- SEKSI: PENGATURAN -->
-            <section v-if="activeTab === 'pengaturan'" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn no-print">
+            <!-- PENGATURAN -->
+            <section v-if="!isSelfCheckIn && activeTab === 'pengaturan'" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn no-print">
                 <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
-                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="settings" :class="theme.accent"></i> Kategori & Kuota</h3>
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="settings" :class="theme.accent"></i> Kontrol Data</h3>
                     <div>
-                        <label class="block text-sm mb-1">Maksimal Tamu</label>
-                        <input type="number" v-model="maxGuests" class="w-full p-2 border rounded-lg outline-none focus:ring-2 focus:ring-slate-200">
+                        <label class="block text-sm font-bold mb-1">Target Kuota Tamu</label>
+                        <input type="number" v-model="maxGuests" class="w-full p-2 border rounded-lg outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm mb-1 text-slate-400">Tambah Kategori Baru</label>
-                        <div class="flex gap-2">
-                            <input type="text" id="catInput" class="flex-1 p-2 border rounded-lg outline-none focus:ring-2 focus:ring-slate-200" placeholder="Misal: Alumni">
-                            <button @click="addCategory" :class="[theme.primary, 'text-white px-4 rounded-lg']">Add</button>
+                        <label class="block text-sm font-bold mb-1">Manajemen Kategori</label>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="catInput" class="flex-1 p-2 border rounded-lg outline-none" placeholder="Nama kategori baru...">
+                            <button @click="addCategory" :class="[theme.primary, 'text-white px-4 rounded-lg font-bold']">Tambah</button>
                         </div>
-                    </div>
-                    <div class="flex flex-wrap gap-2 pt-2">
-                        <span v-for="cat in categories" :key="cat" class="bg-slate-50 border border-slate-200 px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-2">
-                            {{ cat }}
-                            <button @click="removeCategory(cat)" class="text-red-500 font-bold hover:scale-110">×</button>
-                        </span>
+                        <div class="flex flex-wrap gap-2">
+                            <span v-for="cat in categories" :key="cat" class="bg-slate-100 px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-2 border">
+                                {{ cat }} <button @click="removeCategory(cat)" class="text-red-500 font-black">×</button>
+                            </span>
+                        </div>
                     </div>
                 </div>
 
                 <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
-                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="palette" :class="theme.accent"></i> Pilih Tema UI</h3>
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="palette" :class="theme.accent"></i> Tema Aplikasi</h3>
                     <div class="grid grid-cols-1 gap-3">
                         <button v-for="(t, key) in themeOptions" :key="key" @click="currentTheme = key" 
                             :class="[currentTheme === key ? 'border-slate-800 bg-slate-50' : 'border-transparent bg-white', 'p-4 rounded-xl border-2 flex items-center gap-4 transition-all']">
-                            <div :class="[t.primary, 'w-8 h-8 rounded-full']"></div>
+                            <div :class="[t.primary, 'w-6 h-6 rounded-full shadow-inner']"></div>
                             <span class="font-bold text-sm">{{ t.name }}</span>
                         </button>
                     </div>
@@ -333,10 +353,6 @@
             </section>
 
         </main>
-
-        <footer class="mt-12 py-8 border-t border-slate-200 text-center text-slate-400 text-xs no-print">
-            &copy; 2025 {{ weddingInfo.logoText }} - Professional Wedding Solutions
-        </footer>
     </div>
 
     <script>
@@ -346,65 +362,33 @@
             setup() {
                 const activeTab = ref('beranda');
                 const dbFilter = ref('all');
+                const regFilter = ref('all');
                 const guests = ref([]);
                 const maxGuests = ref(500);
                 const currentTheme = ref('modern');
                 const categories = ref(['Keluarga', 'Teman', 'VVIP', 'Rekan Kerja']);
                 const showNotification = ref(false);
+                const isSelfCheckIn = ref(false);
                 
-                const form = ref({
-                    nama: '',
-                    hp: '',
-                    alamat: '',
-                    kategori: 'Keluarga',
-                    ucapan: ''
-                });
+                const form = ref({ nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' });
 
                 const weddingInfo = {
                     mempelai: "Andi & Rina",
                     tanggal: "12 Desember 2025",
-                    lokasi: "Gedung Serbaguna, Jakarta",
-                    logoText: "ARinvitation"
+                    lokasi: "Hotel Mulia, Senayan",
+                    logoText: "AR Wedding"
                 };
 
                 const themeOptions = {
-                    modern: {
-                        name: 'Modern Black',
-                        primary: 'bg-slate-900',
-                        secondary: 'bg-white',
-                        accent: 'text-slate-900',
-                        button: 'bg-slate-800 hover:bg-slate-700',
-                        card: 'bg-white border-slate-100',
-                        text: 'text-slate-800'
-                    },
-                    romantic: {
-                        name: 'Romantic Pink',
-                        primary: 'bg-rose-500',
-                        secondary: 'bg-rose-50',
-                        accent: 'text-rose-600',
-                        button: 'bg-rose-600 hover:bg-rose-500',
-                        card: 'bg-white border-rose-100',
-                        text: 'text-rose-900'
-                    },
-                    luxury: {
-                        name: 'Luxury Gold',
-                        primary: 'bg-amber-800',
-                        secondary: 'bg-stone-50',
-                        accent: 'text-amber-800',
-                        button: 'bg-amber-800 hover:bg-amber-700',
-                        card: 'bg-white border-amber-100',
-                        text: 'text-stone-900'
-                    }
+                    modern: { name: 'Dark Onyx', primary: 'bg-slate-900', secondary: 'bg-white', accent: 'text-slate-900', button: 'bg-slate-800 hover:bg-slate-700', card: 'bg-white', text: 'text-slate-800' },
+                    romantic: { name: 'Blush Pink', primary: 'bg-rose-500', secondary: 'bg-rose-50', accent: 'text-rose-600', button: 'bg-rose-600 hover:bg-rose-500', card: 'bg-white', text: 'text-rose-900' },
+                    luxury: { name: 'Royal Amber', primary: 'bg-amber-800', secondary: 'bg-stone-50', accent: 'text-amber-800', button: 'bg-amber-800 hover:bg-amber-700', card: 'bg-white', text: 'text-stone-900' }
                 };
 
                 const theme = computed(() => themeOptions[currentTheme.value]);
-                const progressWidth = computed(() => Math.min((guests.value.length / maxGuests.value) * 100, 100));
 
                 const statsPerCategory = computed(() => {
-                    return categories.value.map(c => ({
-                        name: c,
-                        count: guests.value.filter(g => g.kategori === c).length
-                    }));
+                    return categories.value.map(c => ({ name: c, count: guests.value.filter(g => g.kategori === c).length }));
                 });
 
                 const filteredGuests = computed(() => {
@@ -412,40 +396,30 @@
                     return guests.value.filter(g => g.kategori === dbFilter.value);
                 });
 
-                // Fungsi untuk menghasilkan QR Code yang terbaca
+                const paginatedRegGuests = computed(() => {
+                    const filtered = regFilter.value === 'all' 
+                        ? guests.value 
+                        : guests.value.filter(g => g.kategori === regFilter.value);
+                    return filtered.slice(0, 10); 
+                });
+
                 const generateQRCode = () => {
                     nextTick(() => {
                         const container = document.getElementById("qrcode-container");
                         if (!container) return;
-                        container.innerHTML = ""; // Bersihkan kontainer
+                        container.innerHTML = "";
+                        const currentUrl = window.location.href.split('?')[0];
+                        const targetUrl = `${currentUrl}?mode=checkin`;
                         
-                        // Menghasilkan QR Code nyata
                         new QRCode(container, {
-                            text: window.location.href, // Menggunakan URL saat ini sebagai data
-                            width: 256,
-                            height: 256,
+                            text: targetUrl,
+                            width: 200,
+                            height: 200,
                             colorDark : "#000000",
                             colorLight : "#ffffff",
                             correctLevel : QRCode.CorrectLevel.H
                         });
                     });
-                };
-
-                const playNotificationSound = () => {
-                    try {
-                        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                        const oscillator = audioCtx.createOscillator();
-                        const gainNode = audioCtx.createGain();
-                        oscillator.type = 'sine';
-                        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-                        oscillator.connect(gainNode);
-                        gainNode.connect(audioCtx.destination);
-                        gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-                        gainNode.gain.linearRampToValueAtTime(0.1, audioCtx.currentTime + 0.05);
-                        gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
-                        oscillator.start();
-                        oscillator.stop(audioCtx.currentTime + 0.3);
-                    } catch (e) {}
                 };
 
                 const submitGuest = () => {
@@ -456,30 +430,20 @@
                         alamat: form.value.alamat,
                         kategori: form.value.kategori,
                         ucapan: form.value.ucapan,
-                        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' - ' + new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
+                        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                     });
-
-                    form.value.nama = '';
-                    form.value.hp = '';
-                    form.value.alamat = '';
-                    form.value.ucapan = '';
-
-                    playNotificationSound();
+                    
+                    form.value = { nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' };
                     showNotification.value = true;
                     setTimeout(() => { showNotification.value = false; }, 3000);
-
                     nextTick(() => lucide.createIcons());
                 };
 
-                const setFilterAndGo = (catName) => {
-                    dbFilter.value = catName;
-                    activeTab.value = 'database';
+                const deleteGuest = (id) => { 
+                    guests.value = guests.value.filter(g => g.id !== id); 
+                    nextTick(() => lucide.createIcons());
                 };
-
-                const deleteGuest = (id) => {
-                    guests.value = guests.value.filter(g => g.id !== id);
-                };
-
+                
                 const addCategory = () => {
                     const input = document.getElementById('catInput');
                     if (input.value && !categories.value.includes(input.value)) {
@@ -488,116 +452,91 @@
                     }
                 };
 
-                const removeCategory = (cat) => {
-                    categories.value = categories.value.filter(c => c !== cat);
+                const removeCategory = (cat) => { 
+                    categories.value = categories.value.filter(c => c !== cat); 
                     if (dbFilter.value === cat) dbFilter.value = 'all';
                 };
 
-                // EKSPOR PDF: Per Kategori & Berurutan
                 const exportToPDF = () => {
                     const { jsPDF } = window.jspdf;
                     const doc = new jsPDF();
                     
                     doc.setFontSize(18);
-                    doc.setTextColor(40);
-                    doc.text(`LAPORAN TAMU: ${weddingInfo.mempelai.toUpperCase()}`, 14, 15);
-                    
+                    doc.text(`LAPORAN BUKU TAMU: ${weddingInfo.mempelai}`, 14, 15);
                     doc.setFontSize(10);
-                    doc.setTextColor(100);
-                    doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 22);
-
-                    const statsRows = [
-                        ['Total Tamu Terdaftar', guests.value.length.toString()],
-                        ...statsPerCategory.value.map(s => [`Kategori: ${s.name}`, s.count.toString()])
-                    ];
+                    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')} | Total: ${guests.length} Tamu`, 14, 22);
                     
+                    // TABEL RINGKASAN JUMLAH PER KATEGORI
+                    doc.setFontSize(12);
+                    doc.text(`RINGKASAN JUMLAH PER KATEGORI`, 14, 32);
+                    
+                    const summaryBody = statsPerCategory.value.map(s => [s.name, s.count]);
+                    summaryBody.push(['TOTAL KESELURUHAN', guests.value.length]);
+
                     doc.autoTable({
-                        startY: 30,
-                        head: [['Deskripsi Ringkasan', 'Jumlah']],
-                        body: statsRows,
+                        startY: 37,
+                        head: [['Nama Kategori', 'Jumlah Tamu']],
+                        body: summaryBody,
                         theme: 'grid',
-                        headStyles: { fillColor: [71, 85, 105] },
-                        columnStyles: { 1: { halign: 'center', fontStyle: 'bold' } }
+                        headStyles: { fillColor: [71, 85, 105], fontStyle: 'bold' },
+                        footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
                     });
 
                     let finalY = doc.lastAutoTable.finalY + 15;
 
-                    const categoriesToExport = dbFilter.value === 'all' ? categories.value : [dbFilter.value];
-                    
-                    doc.setFontSize(14);
-                    doc.setTextColor(40);
-                    doc.text('Detail Data Tamu', 14, finalY);
-                    finalY += 5;
-
-                    categoriesToExport.forEach((catName) => {
-                        const catGuests = guests.value.filter(g => g.kategori === catName);
-                        
-                        if (catGuests.length > 0) {
-                            if (finalY > 240) { doc.addPage(); finalY = 20; }
-
-                            doc.setFontSize(11);
-                            doc.setTextColor(0);
-                            doc.text(`Kategori: ${catName} (${catGuests.length} Tamu)`, 14, finalY + 5);
-
-                            doc.autoTable({
-                                startY: finalY + 8,
-                                head: [['No', 'Nama Tamu', 'WhatsApp', 'Alamat', 'Waktu']],
-                                body: catGuests.map((g, i) => [i + 1, g.nama, g.hp, g.alamat || '-', g.time]),
-                                headStyles: { fillColor: [30, 41, 59] },
-                                margin: { top: 20 },
-                                didDrawPage: (data) => {
-                                    finalY = data.cursor.y;
-                                }
-                            });
-                            
-                            finalY = doc.lastAutoTable.finalY + 10;
-                        }
+                    // Tabel Detail Keseluruhan
+                    doc.setFontSize(12);
+                    doc.text(`DAFTAR KEDATANGAN TAMU`, 14, finalY);
+                    doc.autoTable({
+                        startY: finalY + 5,
+                        head: [['No', 'Waktu', 'Nama Tamu', 'Kategori', 'WhatsApp']],
+                        body: guests.value.map((g, i) => [i + 1, g.time, g.nama, g.kategori, g.hp]),
+                        headStyles: { fillColor: [51, 65, 85] }
                     });
 
-                    const fileName = `Laporan_Tamu_${weddingInfo.mempelai.replace(/\s/g, '_')}.pdf`;
-                    doc.save(fileName);
+                    // Tabel Detail Per Kategori (Jika diperlukan di halaman baru)
+                    categories.value.forEach((cat) => {
+                        const guestList = guests.value.filter(g => g.kategori === cat);
+                        if (guestList.length > 0) {
+                            finalY = doc.lastAutoTable.finalY + 15;
+                            if (finalY > 240) { doc.addPage(); finalY = 20; }
+                            
+                            doc.setFontSize(12);
+                            doc.text(`DETAIL KATEGORI: ${cat.toUpperCase()} (${guestList.length} Tamu)`, 14, finalY);
+                            
+                            doc.autoTable({
+                                startY: finalY + 5,
+                                head: [['No', 'Nama Tamu', 'WhatsApp', 'Alamat', 'Ucapan']],
+                                body: guestList.map((g, i) => [i + 1, g.nama, g.hp, g.alamat || '-', g.ucapan || '-']),
+                                headStyles: { fillColor: [100, 116, 139] }
+                            });
+                        }
+                    });
+                    
+                    doc.save(`Laporan_Wedding_${weddingInfo.mempelai.replace(/\s/g, '_')}.pdf`);
                 };
 
                 onMounted(() => {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    if (urlParams.get('mode') === 'checkin') {
+                        isSelfCheckIn.value = true;
+                    }
                     lucide.createIcons();
                 });
 
-                watch(activeTab, (newTab) => {
-                    if (newTab === 'qr') {
-                        generateQRCode();
-                    }
-                    nextTick(() => lucide.createIcons());
-                });
-
-                watch(dbFilter, () => {
+                watch(activeTab, (val) => {
+                    if (val === 'registrasi') generateQRCode();
                     nextTick(() => lucide.createIcons());
                 });
 
                 return {
-                    activeTab, dbFilter, guests, maxGuests, currentTheme, categories, form,
-                    weddingInfo, themeOptions, theme, progressWidth, statsPerCategory,
-                    filteredGuests, showNotification, submitGuest, setFilterAndGo, 
-                    deleteGuest, addCategory, removeCategory, exportToPDF
+                    activeTab, dbFilter, regFilter, guests, maxGuests, currentTheme, categories, form,
+                    weddingInfo, themeOptions, theme, statsPerCategory, filteredGuests, paginatedRegGuests,
+                    showNotification, isSelfCheckIn, submitGuest, deleteGuest, addCategory, 
+                    removeCategory, exportToPDF
                 }
             }
         }).mount('#app');
     </script>
-
-    <style>
-        .animate-fadeIn {
-            animation: fadeIn 0.4s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-    </style>
 </body>
 </html>
