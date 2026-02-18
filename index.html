@@ -538,5 +538,104 @@
             }
         }).mount('#app');
     </script>
+<script>
+    const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
+
+    createApp({
+        setup() {
+            // 1. Letakkan URL Database di sini
+            const DATABASE_URL = 'https://script.google.com/macros/s/AKfycbxiT7U4-TEf7I09PbUftfn_AuS91gN_L_MIw9hsYz98Fg5F8-XrEMx5WN8B3lMdHpQuKg/exec';
+
+            const activeTab = ref('beranda');
+            const dbFilter = ref('all');
+            const regFilter = ref('all');
+            const guests = ref([]); // Data ini nanti akan diisi dari Google Sheets
+            
+            // ... (biarkan kode variabel lain tetap ada)
+
+            // 2. Tambahkan fungsi loadGuests di sini
+            const loadGuests = async () => {
+                try {
+                    const response = await fetch(DATABASE_URL);
+                    const data = await response.json();
+                    // Map data agar memiliki ID (penting untuk fungsi delete di UI kamu)
+                    guests.value = data.reverse().map(g => ({ ...g, id: g.id || Date.now() + Math.random() }));
+                } catch (e) {
+                    console.error("Gagal mengambil data", e);
+                }
+            };
+
+            // 3. Ganti fungsi submitGuest yang lama dengan yang ini
+            const submitGuest = async () => {
+                const newGuest = {
+                    nama: form.value.nama,
+                    hp: form.value.hp,
+                    alamat: form.value.alamat,
+                    kategori: form.value.kategori,
+                    ucapan: form.value.ucapan,
+                    time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+                };
+
+                try {
+                    // Kirim ke Google Sheets
+                    await fetch(DATABASE_URL, {
+                        method: 'POST',
+                        mode: 'no-cors', // Penting agar tidak kena error CORS Google
+                        body: JSON.stringify(newGuest)
+                    });
+                    
+                    // Update tampilan lokal agar instan muncul
+                    guests.value.unshift({ id: Date.now(), ...newGuest });
+                    
+                    // Reset Form & Notif
+                    form.value = { nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' };
+                    showNotification.value = true;
+                    setTimeout(() => { showNotification.value = false; }, 3000);
+                    nextTick(() => lucide.createIcons());
+                } catch (e) {
+                    alert("Terjadi gangguan koneksi!");
+                }
+            };
+
+            // ... (biarkan fungsi deleteGuest, addCategory, dll tetap di sana)
+
+            // 4. Panggil loadGuests di dalam onMounted
+            onMounted(() => {
+                loadGuests(); // <--- Tambahkan ini
+                
+                lucide.createIcons();
+                generateQRCode();
+                
+                const urlParams = new URLSearchParams(window.location.search);
+                if (urlParams.get('mode') === 'checkin') {
+                    isSelfCheckIn.value = true;
+                }
+            });
+
+            // Return semua fungsi agar bisa dipakai di HTML
+            return {
+                activeTab, dbFilter, regFilter, guests, maxGuests, 
+                currentTheme, categories, showNotification, isSelfCheckIn,
+                form, weddingInfo, themeOptions, theme, statsPerCategory,
+                filteredGuests, paginatedRegGuests, submitGuest, 
+                deleteGuest, addCategory, removeCategory, exportToPDF
+            }
+        }
+    }).mount('#app');
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 </body>
 </html>
