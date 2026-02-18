@@ -355,217 +355,93 @@
         </main>
     </div>
 
-    <script>
-        const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
-
-        createApp({
-            setup() {
-                const activeTab = ref('beranda');
-                const dbFilter = ref('all');
-                const regFilter = ref('all');
-                const guests = ref([]);
-                const maxGuests = ref(500);
-                const currentTheme = ref('modern');
-                const categories = ref(['Keluarga', 'Teman', 'VVIP', 'Rekan Kerja']);
-                const showNotification = ref(false);
-                const isSelfCheckIn = ref(false);
-                
-                const form = ref({ nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' });
-
-                const weddingInfo = {
-                    mempelai: "Andi & Rina",
-                    tanggal: "12 Desember 2025",
-                    lokasi: "Hotel Mulia, Senayan",
-                    logoText: "AR Wedding"
-                };
-
-                const themeOptions = {
-                    modern: { name: 'Dark Onyx', primary: 'bg-slate-900', secondary: 'bg-white', accent: 'text-slate-900', button: 'bg-slate-800 hover:bg-slate-700', card: 'bg-white', text: 'text-slate-800' },
-                    romantic: { name: 'Blush Pink', primary: 'bg-rose-500', secondary: 'bg-rose-50', accent: 'text-rose-600', button: 'bg-rose-600 hover:bg-rose-500', card: 'bg-white', text: 'text-rose-900' },
-                    luxury: { name: 'Royal Amber', primary: 'bg-amber-800', secondary: 'bg-stone-50', accent: 'text-amber-800', button: 'bg-amber-800 hover:bg-amber-700', card: 'bg-white', text: 'text-stone-900' }
-                };
-
-                const theme = computed(() => themeOptions[currentTheme.value]);
-
-                const statsPerCategory = computed(() => {
-                    return categories.value.map(c => ({ name: c, count: guests.value.filter(g => g.kategori === c).length }));
-                });
-
-                const filteredGuests = computed(() => {
-                    if (dbFilter.value === 'all') return guests.value;
-                    return guests.value.filter(g => g.kategori === dbFilter.value);
-                });
-
-                const paginatedRegGuests = computed(() => {
-                    const filtered = regFilter.value === 'all' 
-                        ? guests.value 
-                        : guests.value.filter(g => g.kategori === regFilter.value);
-                    return filtered.slice(0, 10); 
-                });
-
-                const generateQRCode = () => {
-                    nextTick(() => {
-                        const container = document.getElementById("qrcode-container");
-                        if (!container) return;
-                        container.innerHTML = "";
-                        const currentUrl = window.location.href.split('?')[0];
-                        const targetUrl = `${currentUrl}?mode=checkin`;
-                        
-                        new QRCode(container, {
-                            text: targetUrl,
-                            width: 200,
-                            height: 200,
-                            colorDark : "#000000",
-                            colorLight : "#ffffff",
-                            correctLevel : QRCode.CorrectLevel.H
-                        });
-                    });
-                };
-
-                const submitGuest = () => {
-                    guests.value.unshift({
-                        id: Date.now(),
-                        nama: form.value.nama,
-                        hp: form.value.hp,
-                        alamat: form.value.alamat,
-                        kategori: form.value.kategori,
-                        ucapan: form.value.ucapan,
-                        time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
-                    });
-                    
-                    form.value = { nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' };
-                    showNotification.value = true;
-                    setTimeout(() => { showNotification.value = false; }, 3000);
-                    nextTick(() => lucide.createIcons());
-                };
-
-                const deleteGuest = (id) => { 
-                    guests.value = guests.value.filter(g => g.id !== id); 
-                    nextTick(() => lucide.createIcons());
-                };
-                
-                const addCategory = () => {
-                    const input = document.getElementById('catInput');
-                    if (input.value && !categories.value.includes(input.value)) {
-                        categories.value.push(input.value);
-                        input.value = '';
-                    }
-                };
-
-                const removeCategory = (cat) => { 
-                    categories.value = categories.value.filter(c => c !== cat); 
-                    if (dbFilter.value === cat) dbFilter.value = 'all';
-                };
-
-                const exportToPDF = () => {
-                    const { jsPDF } = window.jspdf;
-                    const doc = new jsPDF();
-                    
-                    doc.setFontSize(18);
-                    doc.text(`LAPORAN BUKU TAMU: ${weddingInfo.mempelai}`, 14, 15);
-                    doc.setFontSize(10);
-                    doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')} | Total: ${guests.length} Tamu`, 14, 22);
-                    
-                    // TABEL RINGKASAN JUMLAH PER KATEGORI
-                    doc.setFontSize(12);
-                    doc.text(`RINGKASAN JUMLAH PER KATEGORI`, 14, 32);
-                    
-                    const summaryBody = statsPerCategory.value.map(s => [s.name, s.count]);
-                    summaryBody.push(['TOTAL KESELURUHAN', guests.value.length]);
-
-                    doc.autoTable({
-                        startY: 37,
-                        head: [['Nama Kategori', 'Jumlah Tamu']],
-                        body: summaryBody,
-                        theme: 'grid',
-                        headStyles: { fillColor: [71, 85, 105], fontStyle: 'bold' },
-                        footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
-                    });
-
-                    let finalY = doc.lastAutoTable.finalY + 15;
-
-                    // Tabel Detail Keseluruhan
-                    doc.setFontSize(12);
-                    doc.text(`DAFTAR KEDATANGAN TAMU`, 14, finalY);
-                    doc.autoTable({
-                        startY: finalY + 5,
-                        head: [['No', 'Waktu', 'Nama Tamu', 'Kategori', 'WhatsApp']],
-                        body: guests.value.map((g, i) => [i + 1, g.time, g.nama, g.kategori, g.hp]),
-                        headStyles: { fillColor: [51, 65, 85] }
-                    });
-
-                    // Tabel Detail Per Kategori (Jika diperlukan di halaman baru)
-                    categories.value.forEach((cat) => {
-                        const guestList = guests.value.filter(g => g.kategori === cat);
-                        if (guestList.length > 0) {
-                            finalY = doc.lastAutoTable.finalY + 15;
-                            if (finalY > 240) { doc.addPage(); finalY = 20; }
-                            
-                            doc.setFontSize(12);
-                            doc.text(`DETAIL KATEGORI: ${cat.toUpperCase()} (${guestList.length} Tamu)`, 14, finalY);
-                            
-                            doc.autoTable({
-                                startY: finalY + 5,
-                                head: [['No', 'Nama Tamu', 'WhatsApp', 'Alamat', 'Ucapan']],
-                                body: guestList.map((g, i) => [i + 1, g.nama, g.hp, g.alamat || '-', g.ucapan || '-']),
-                                headStyles: { fillColor: [100, 116, 139] }
-                            });
-                        }
-                    });
-                    
-                    doc.save(`Laporan_Wedding_${weddingInfo.mempelai.replace(/\s/g, '_')}.pdf`);
-                };
-
-                onMounted(() => {
-                    const urlParams = new URLSearchParams(window.location.search);
-                    if (urlParams.get('mode') === 'checkin') {
-                        isSelfCheckIn.value = true;
-                    }
-                    lucide.createIcons();
-                });
-
-                watch(activeTab, (val) => {
-                    if (val === 'registrasi') generateQRCode();
-                    nextTick(() => lucide.createIcons());
-                });
-
-                return {
-                    activeTab, dbFilter, regFilter, guests, maxGuests, currentTheme, categories, form,
-                    weddingInfo, themeOptions, theme, statsPerCategory, filteredGuests, paginatedRegGuests,
-                    showNotification, isSelfCheckIn, submitGuest, deleteGuest, addCategory, 
-                    removeCategory, exportToPDF
-                }
-            }
-        }).mount('#app');
-    </script>
-<script>
+  <script>
     const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
     createApp({
         setup() {
-            // 1. Letakkan URL Database di sini
-            const DATABASE_URL = 'https://script.google.com/macros/s/AKfycbxiT7U4-TEf7I09PbUftfn_AuS91gN_L_MIw9hsYz98Fg5F8-XrEMx5WN8B3lMdHpQuKg/exec';
+            // --- KONFIGURASI DATABASE ---
+            // Ganti URL di bawah ini dengan URL Web App dari Google Apps Script kamu
+            const DATABASE_URL = 'https://script.google.com/macros/s/AKfycbwZs8Pkk1dPnIeTuIwcPLa01_d7zUhknHiQCgUrYggXTsaFQRuTvw2X9bXuGCidJ9J0Jg/exec';
 
             const activeTab = ref('beranda');
             const dbFilter = ref('all');
             const regFilter = ref('all');
-            const guests = ref([]); // Data ini nanti akan diisi dari Google Sheets
+            const guests = ref([]);
+            const maxGuests = ref(500);
+            const currentTheme = ref('modern');
+            const categories = ref(['Keluarga', 'Teman', 'VVIP', 'Rekan Kerja']);
+            const showNotification = ref(false);
+            const isSelfCheckIn = ref(false);
             
-            // ... (biarkan kode variabel lain tetap ada)
+            const form = ref({ nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' });
 
-            // 2. Tambahkan fungsi loadGuests di sini
+            const weddingInfo = {
+                mempelai: "Andi & Rina",
+                tanggal: "12 Desember 2025",
+                lokasi: "Hotel Mulia, Senayan",
+                logoText: "AR Wedding"
+            };
+
+            const themeOptions = {
+                modern: { name: 'Dark Onyx', primary: 'bg-slate-900', secondary: 'bg-white', accent: 'text-slate-900', button: 'bg-slate-800 hover:bg-slate-700', card: 'bg-white', text: 'text-slate-800' },
+                romantic: { name: 'Blush Pink', primary: 'bg-rose-500', secondary: 'bg-rose-50', accent: 'text-rose-600', button: 'bg-rose-600 hover:bg-rose-500', card: 'bg-white', text: 'text-rose-900' },
+                luxury: { name: 'Royal Amber', primary: 'bg-amber-800', secondary: 'bg-stone-50', accent: 'text-amber-800', button: 'bg-amber-800 hover:bg-amber-700', card: 'bg-white', text: 'text-stone-900' }
+            };
+
+            const theme = computed(() => themeOptions[currentTheme.value]);
+
+            const statsPerCategory = computed(() => {
+                return categories.value.map(c => ({ name: c, count: guests.value.filter(g => g.kategori === c).length }));
+            });
+
+            const filteredGuests = computed(() => {
+                if (dbFilter.value === 'all') return guests.value;
+                return guests.value.filter(g => g.kategori === dbFilter.value);
+            });
+
+            const paginatedRegGuests = computed(() => {
+                const filtered = regFilter.value === 'all' 
+                    ? guests.value 
+                    : guests.value.filter(g => g.kategori === regFilter.value);
+                return filtered.slice(0, 10); 
+            });
+
+            // --- FUNGSI AMBIL DATA DARI DATABASE ---
             const loadGuests = async () => {
                 try {
                     const response = await fetch(DATABASE_URL);
                     const data = await response.json();
-                    // Map data agar memiliki ID (penting untuk fungsi delete di UI kamu)
-                    guests.value = data.reverse().map(g => ({ ...g, id: g.id || Date.now() + Math.random() }));
+                    // Map data dan pastikan ada ID untuk fungsi hapus di UI
+                    guests.value = data.reverse().map(g => ({
+                        ...g,
+                        id: g.id || Date.now() + Math.random()
+                    }));
                 } catch (e) {
-                    console.error("Gagal mengambil data", e);
+                    console.error("Gagal memuat data dari database.");
                 }
             };
 
-            // 3. Ganti fungsi submitGuest yang lama dengan yang ini
+            const generateQRCode = () => {
+                nextTick(() => {
+                    const container = document.getElementById("qrcode-container");
+                    if (!container) return;
+                    container.innerHTML = "";
+                    const currentUrl = window.location.href.split('?')[0];
+                    const targetUrl = `${currentUrl}?mode=checkin`;
+                    
+                    new QRCode(container, {
+                        text: targetUrl,
+                        width: 200,
+                        height: 200,
+                        colorDark : "#000000",
+                        colorLight : "#ffffff",
+                        correctLevel : QRCode.CorrectLevel.H
+                    });
+                });
+            };
+
+            // --- FUNGSI SIMPAN DATA (UPDATE) ---
             const submitGuest = async () => {
                 const newGuest = {
                     nama: form.value.nama,
@@ -577,15 +453,15 @@
                 };
 
                 try {
+                    // Simpan ke UI secara lokal dulu (supaya cepat)
+                    guests.value.unshift({ id: Date.now(), ...newGuest });
+
                     // Kirim ke Google Sheets
                     await fetch(DATABASE_URL, {
                         method: 'POST',
-                        mode: 'no-cors', // Penting agar tidak kena error CORS Google
+                        mode: 'no-cors',
                         body: JSON.stringify(newGuest)
                     });
-                    
-                    // Update tampilan lokal agar instan muncul
-                    guests.value.unshift({ id: Date.now(), ...newGuest });
                     
                     // Reset Form & Notif
                     form.value = { nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' };
@@ -593,48 +469,92 @@
                     setTimeout(() => { showNotification.value = false; }, 3000);
                     nextTick(() => lucide.createIcons());
                 } catch (e) {
-                    alert("Terjadi gangguan koneksi!");
+                    alert("Koneksi bermasalah, data mungkin tidak tersimpan di database.");
                 }
             };
 
-            // ... (biarkan fungsi deleteGuest, addCategory, dll tetap di sana)
+            const deleteGuest = (id) => { 
+                if(confirm("Hapus tamu dari daftar tampilan? (Data di Google Sheets tetap ada)")) {
+                    guests.value = guests.value.filter(g => g.id !== id); 
+                    nextTick(() => lucide.createIcons());
+                }
+            };
+            
+            const addCategory = () => {
+                const input = document.getElementById('catInput');
+                if (input.value && !categories.value.includes(input.value)) {
+                    categories.value.push(input.value);
+                    input.value = '';
+                }
+            };
 
-            // 4. Panggil loadGuests di dalam onMounted
-            onMounted(() => {
-                loadGuests(); // <--- Tambahkan ini
+            const removeCategory = (cat) => { 
+                categories.value = categories.value.filter(c => c !== cat); 
+                if (dbFilter.value === cat) dbFilter.value = 'all';
+            };
+
+            const exportToPDF = () => {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
                 
-                lucide.createIcons();
-                generateQRCode();
+                doc.setFontSize(18);
+                doc.text(`LAPORAN BUKU TAMU: ${weddingInfo.mempelai}`, 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')} | Total: ${guests.value.length} Tamu`, 14, 22);
+                
+                doc.setFontSize(12);
+                doc.text(`RINGKASAN JUMLAH PER KATEGORI`, 14, 32);
+                
+                const summaryBody = statsPerCategory.value.map(s => [s.name, s.count]);
+                summaryBody.push(['TOTAL KESELURUHAN', guests.value.length]);
+
+                doc.autoTable({
+                    startY: 37,
+                    head: [['Nama Kategori', 'Jumlah Tamu']],
+                    body: summaryBody,
+                    theme: 'grid',
+                    headStyles: { fillColor: [71, 85, 105], fontStyle: 'bold' },
+                    footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
+                });
+
+                let finalY = doc.lastAutoTable.finalY + 15;
+
+                doc.setFontSize(12);
+                doc.text(`DAFTAR KEDATANGAN TAMU`, 14, finalY);
+                doc.autoTable({
+                    startY: finalY + 5,
+                    head: [['No', 'Waktu', 'Nama Tamu', 'Kategori', 'WhatsApp']],
+                    body: guests.value.map((g, i) => [i + 1, g.time, g.nama, g.kategori, g.hp]),
+                    headStyles: { fillColor: [51, 65, 85] }
+                });
+
+                doc.save(`Laporan_Wedding_${weddingInfo.mempelai.replace(/\s/g, '_')}.pdf`);
+            };
+
+            onMounted(() => {
+                loadGuests(); // Ambil data saat web dibuka
                 
                 const urlParams = new URLSearchParams(window.location.search);
                 if (urlParams.get('mode') === 'checkin') {
                     isSelfCheckIn.value = true;
                 }
+                lucide.createIcons();
             });
 
-            // Return semua fungsi agar bisa dipakai di HTML
+            watch(activeTab, (val) => {
+                if (val === 'registrasi') generateQRCode();
+                nextTick(() => lucide.createIcons());
+            });
+
             return {
-                activeTab, dbFilter, regFilter, guests, maxGuests, 
-                currentTheme, categories, showNotification, isSelfCheckIn,
-                form, weddingInfo, themeOptions, theme, statsPerCategory,
-                filteredGuests, paginatedRegGuests, submitGuest, 
-                deleteGuest, addCategory, removeCategory, exportToPDF
+                activeTab, dbFilter, regFilter, guests, maxGuests, currentTheme, categories, form,
+                weddingInfo, themeOptions, theme, statsPerCategory, filteredGuests, paginatedRegGuests,
+                showNotification, isSelfCheckIn, submitGuest, deleteGuest, addCategory, 
+                removeCategory, exportToPDF
             }
         }
     }).mount('#app');
 </script>
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 </body>
