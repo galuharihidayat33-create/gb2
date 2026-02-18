@@ -13,8 +13,6 @@
     <!-- jsPDF & AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <!-- QRCode JS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -25,13 +23,6 @@
         [v-cloak] { display: none; }
         
         .transition-theme { transition: all 0.5s ease; }
-
-        #qrcode-container img {
-            margin: 0 auto;
-            border: 8px solid white;
-            border-radius: 12px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
 
         .slide-up-enter-active, .slide-up-leave-active {
             transition: all 0.3s ease-out;
@@ -46,6 +37,15 @@
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* Animation Utility */
+        .animate-fadeIn {
+            animation: fadeIn 0.5s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body class="transition-theme">
@@ -55,7 +55,7 @@
         <transition name="slide-up">
             <div v-if="showNotification" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
                 <i data-lucide="check-circle" class="w-5 h-5"></i>
-                <span class="font-bold">Data Berhasil Disimpan!</span>
+                <span class="font-bold">{{ notificationMessage }}</span>
             </div>
         </transition>
 
@@ -148,7 +148,7 @@
                             <span class="text-2xl font-black">{{ maxGuests }}</span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
-                            <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: (guests.length / maxGuests * 100) + '%' }"></div>
+                            <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: Math.min((guests.length / maxGuests * 100), 100) + '%' }"></div>
                         </div>
                         <p class="mt-2 text-sm text-slate-500 text-right">Terisi: {{ guests.length }} Tamu</p>
                     </div>
@@ -165,66 +165,44 @@
                 </div>
             </section>
 
-            <!-- REGISTRASI + QR + DATABASE TERINTEGRASI -->
+            <!-- REGISTRASI -->
             <section v-if="!isSelfCheckIn && activeTab === 'registrasi'" class="space-y-8 animate-fadeIn">
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    
-                    <!-- FORM INPUT (SISI KIRI) -->
-                    <div class="lg:col-span-2 space-y-6">
-                        <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme no-print']">
-                            <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                                <i data-lucide="edit-3" :class="theme.accent"></i> Registrasi Tamu
-                            </h2>
-                            <form @submit.prevent="submitGuest" class="space-y-4">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">Nama Tamu</label>
-                                    <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ketik nama lengkap..." />
-                                </div>
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-1">WhatsApp</label>
-                                        <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-semibold mb-1">Kategori</label>
-                                        <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
-                                            <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
-                                    <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Kota atau asal instansi..." />
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
-                                    <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tuliskan doa restu..."></textarea>
-                                </div>
-                                <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95']">
-                                    Simpan Kedatangan
-                                </button>
-                            </form>
+                <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme no-print max-w-4xl mx-auto']">
+                    <h2 class="text-2xl font-bold mb-6 flex items-center gap-2 text-center justify-center">
+                        <i data-lucide="edit-3" :class="theme.accent"></i> Registrasi Kedatangan Tamu
+                    </h2>
+                    <form @submit.prevent="submitGuest" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Nama Tamu</label>
+                            <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ketik nama lengkap..." />
                         </div>
-                    </div>
-
-                    <!-- QR CODE (SISI KANAN) -->
-                    <div class="space-y-6">
-                        <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border text-center transition-theme relative overflow-hidden']">
-                            <h3 class="text-xl font-bold mb-2">Self Check-in</h3>
-                            <p class="text-[10px] text-slate-500 mb-6 font-medium uppercase tracking-widest">Scan QR untuk Isi Mandiri</p>
-                            
-                            <div class="bg-slate-50 p-4 rounded-2xl inline-block mx-auto border border-slate-200 mb-4">
-                                <div id="qrcode-container" class="bg-white p-2 rounded-lg"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">WhatsApp</label>
+                                <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
                             </div>
-                            
-                            <button @click="window.print()" :class="[theme.button, 'w-full py-3 text-white rounded-lg flex items-center justify-center gap-2 font-bold no-print shadow-md']">
-                                <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Meja
-                            </button>
+                            <div>
+                                <label class="block text-sm font-semibold mb-1">Kategori</label>
+                                <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
+                                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                            </div>
                         </div>
-                    </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
+                            <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Kota atau asal instansi..." />
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
+                            <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tuliskan doa restu..."></textarea>
+                        </div>
+                        <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95']">
+                            Simpan Kedatangan
+                        </button>
+                    </form>
                 </div>
 
-                <!-- DATABASE DI MENU REGISTRASI -->
+                <!-- DATABASE RINGKAS -->
                 <div :class="[theme.card, 'p-6 rounded-2xl shadow-lg border no-print mt-8']">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-lg font-bold flex items-center gap-2">
@@ -272,9 +250,14 @@
             <section v-if="!isSelfCheckIn && activeTab === 'database'" class="space-y-6 animate-fadeIn no-print">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h2 class="text-2xl font-bold">Laporan Kedatangan</h2>
-                    <div class="flex gap-2">
-                        <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-md">
-                            <i data-lucide="file-down" class="w-4 h-4"></i> Cetak PDF (Grup Kategori)
+                    <div class="flex flex-wrap gap-2">
+                        <!-- RESET DATA BUTTON -->
+                        <button @click="resetAllData" class="bg-white border-2 border-red-500 text-red-500 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-sm font-bold shadow-sm transition-all active:scale-95">
+                            <i data-lucide="trash" class="w-4 h-4"></i> Reset Database
+                        </button>
+                        <!-- PDF EXPORT BUTTON -->
+                        <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-md transition-all active:scale-95">
+                            <i data-lucide="file-down" class="w-4 h-4"></i> Cetak PDF
                         </button>
                     </div>
                 </div>
@@ -312,6 +295,9 @@
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </td>
+                            </tr>
+                            <tr v-if="filteredGuests.length === 0">
+                                <td colspan="6" class="p-10 text-center text-slate-400 italic">Tidak ada data untuk kategori ini.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -360,8 +346,6 @@
 
     createApp({
         setup() {
-            // --- KONFIGURASI DATABASE ---
-            // Ganti URL di bawah ini dengan URL Web App dari Google Apps Script kamu
             const DATABASE_URL = 'https://script.google.com/macros/s/AKfycbwZs8Pkk1dPnIeTuIwcPLa01_d7zUhknHiQCgUrYggXTsaFQRuTvw2X9bXuGCidJ9J0Jg/exec';
 
             const activeTab = ref('beranda');
@@ -372,6 +356,7 @@
             const currentTheme = ref('modern');
             const categories = ref(['Keluarga', 'Teman', 'VVIP', 'Rekan Kerja']);
             const showNotification = ref(false);
+            const notificationMessage = ref('Data Berhasil Diperbarui!');
             const isSelfCheckIn = ref(false);
             
             const form = ref({ nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' });
@@ -407,41 +392,19 @@
                 return filtered.slice(0, 10); 
             });
 
-            // --- FUNGSI AMBIL DATA DARI DATABASE ---
             const loadGuests = async () => {
                 try {
                     const response = await fetch(DATABASE_URL);
                     const data = await response.json();
-                    // Map data dan pastikan ada ID untuk fungsi hapus di UI
                     guests.value = data.reverse().map(g => ({
                         ...g,
                         id: g.id || Date.now() + Math.random()
                     }));
                 } catch (e) {
-                    console.error("Gagal memuat data dari database.");
+                    console.error("Gagal memuat data.");
                 }
             };
 
-            const generateQRCode = () => {
-                nextTick(() => {
-                    const container = document.getElementById("qrcode-container");
-                    if (!container) return;
-                    container.innerHTML = "";
-                    const currentUrl = window.location.href.split('?')[0];
-                    const targetUrl = `${currentUrl}?mode=checkin`;
-                    
-                    new QRCode(container, {
-                        text: targetUrl,
-                        width: 200,
-                        height: 200,
-                        colorDark : "#000000",
-                        colorLight : "#ffffff",
-                        correctLevel : QRCode.CorrectLevel.H
-                    });
-                });
-            };
-
-            // --- FUNGSI SIMPAN DATA (UPDATE) ---
             const submitGuest = async () => {
                 const newGuest = {
                     nama: form.value.nama,
@@ -453,30 +416,62 @@
                 };
 
                 try {
-                    // Simpan ke UI secara lokal dulu (supaya cepat)
                     guests.value.unshift({ id: Date.now(), ...newGuest });
-
-                    // Kirim ke Google Sheets
                     await fetch(DATABASE_URL, {
                         method: 'POST',
                         mode: 'no-cors',
-                        body: JSON.stringify(newGuest)
+                        body: JSON.stringify({ action: 'insert', ...newGuest })
                     });
                     
-                    // Reset Form & Notif
                     form.value = { nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' };
+                    notificationMessage.value = 'Data Berhasil Disimpan!';
                     showNotification.value = true;
                     setTimeout(() => { showNotification.value = false; }, 3000);
                     nextTick(() => lucide.createIcons());
                 } catch (e) {
-                    alert("Koneksi bermasalah, data mungkin tidak tersimpan di database.");
+                    console.error("Error submitting guest");
                 }
             };
 
-            const deleteGuest = (id) => { 
-                if(confirm("Hapus tamu dari daftar tampilan? (Data di Google Sheets tetap ada)")) {
-                    guests.value = guests.value.filter(g => g.id !== id); 
+            const deleteGuest = async (id) => { 
+                if(confirm("Hapus tamu ini?")) {
+                    const guestToDelete = guests.value.find(g => g.id === id);
+                    guests.value = guests.value.filter(g => g.id !== id);
+                    
+                    // Opsional: Kirim sinyal delete ke Apps Script jika script mendukung
+                    await fetch(DATABASE_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        body: JSON.stringify({ action: 'delete', nama: guestToDelete.nama })
+                    });
+                    
                     nextTick(() => lucide.createIcons());
+                }
+            };
+
+            const resetAllData = async () => {
+                const password = prompt("Konfirmasi Reset: Masukkan Nama Mempelai (contoh: Andi) untuk menghapus seluruh database:");
+                
+                if(password && password.toLowerCase() === weddingInfo.mempelai.split(' ')[0].toLowerCase()) {
+                    try {
+                        // Mengirim permintaan ke Apps Script untuk menghapus data di Google Sheet
+                        // Pastikan Google Apps Script Anda memiliki fungsi untuk menangani action: 'reset'
+                        await fetch(DATABASE_URL, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            body: JSON.stringify({ action: 'reset' })
+                        });
+
+                        guests.value = [];
+                        notificationMessage.value = 'Database Berhasil Dikosongkan!';
+                        showNotification.value = true;
+                        setTimeout(() => { showNotification.value = false; }, 3000);
+                        nextTick(() => lucide.createIcons());
+                    } catch (e) {
+                        alert("Gagal menghubungi server database.");
+                    }
+                } else if (password !== null) {
+                    alert("Konfirmasi salah. Data tidak dihapus.");
                 }
             };
             
@@ -496,78 +491,46 @@
             const exportToPDF = () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                
                 doc.setFontSize(18);
                 doc.text(`LAPORAN BUKU TAMU: ${weddingInfo.mempelai}`, 14, 15);
-                doc.setFontSize(10);
-                doc.text(`Dicetak: ${new Date().toLocaleString('id-ID')} | Total: ${guests.value.length} Tamu`, 14, 22);
-                
-                doc.setFontSize(12);
-                doc.text(`RINGKASAN JUMLAH PER KATEGORI`, 14, 32);
-                
                 const summaryBody = statsPerCategory.value.map(s => [s.name, s.count]);
-                summaryBody.push(['TOTAL KESELURUHAN', guests.value.length]);
-
+                summaryBody.push(['TOTAL', guests.value.length]);
                 doc.autoTable({
-                    startY: 37,
-                    head: [['Nama Kategori', 'Jumlah Tamu']],
+                    startY: 25,
+                    head: [['Kategori', 'Jumlah']],
                     body: summaryBody,
                     theme: 'grid',
-                    headStyles: { fillColor: [71, 85, 105], fontStyle: 'bold' },
-                    footStyles: { fillColor: [241, 245, 249], textColor: [0, 0, 0], fontStyle: 'bold' }
+                    headStyles: { fillColor: [71, 85, 105] }
                 });
-
-                let finalY = doc.lastAutoTable.finalY + 15;
-
-                doc.setFontSize(12);
-                doc.text(`DAFTAR KEDATANGAN TAMU`, 14, finalY);
                 doc.autoTable({
-                    startY: finalY + 5,
-                    head: [['No', 'Waktu', 'Nama Tamu', 'Kategori', 'WhatsApp']],
+                    startY: doc.lastAutoTable.finalY + 10,
+                    head: [['No', 'Waktu', 'Nama', 'Kategori', 'HP']],
                     body: guests.value.map((g, i) => [i + 1, g.time, g.nama, g.kategori, g.hp]),
-                    headStyles: { fillColor: [51, 65, 85] }
+                    headStyles: { fillColor: [71, 85, 105] }
                 });
-
-                doc.save(`Laporan_Wedding_${weddingInfo.mempelai.replace(/\s/g, '_')}.pdf`);
+                doc.save(`Laporan_Tamu.pdf`);
             };
 
             onMounted(() => {
-                loadGuests(); // Ambil data saat web dibuka
-                
-                const urlParams = new URLSearchParams(window.location.search);
-                if (urlParams.get('mode') === 'checkin') {
-                    isSelfCheckIn.value = true;
-                }
+                const params = new URLSearchParams(window.location.search);
+                if (params.get('mode') === 'checkin') isSelfCheckIn.value = true;
+                loadGuests();
                 lucide.createIcons();
             });
 
-            watch(activeTab, (val) => {
-                if (val === 'registrasi') generateQRCode();
+            watch(activeTab, () => {
                 nextTick(() => lucide.createIcons());
             });
 
             return {
-                activeTab, dbFilter, regFilter, guests, maxGuests, currentTheme, categories, form,
-                weddingInfo, themeOptions, theme, statsPerCategory, filteredGuests, paginatedRegGuests,
-                showNotification, isSelfCheckIn, submitGuest, deleteGuest, addCategory, 
+                activeTab, dbFilter, regFilter, guests, maxGuests, currentTheme,
+                categories, showNotification, notificationMessage, isSelfCheckIn, form, weddingInfo,
+                themeOptions, theme, statsPerCategory, filteredGuests, 
+                paginatedRegGuests, submitGuest, deleteGuest, resetAllData, addCategory, 
                 removeCategory, exportToPDF
-            }
+            };
         }
     }).mount('#app');
-</script>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  </script>
 </body>
 </html>
