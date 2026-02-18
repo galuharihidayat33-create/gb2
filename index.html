@@ -43,6 +43,7 @@
             header, nav, .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white !important; color: black !important; }
+            .qr-card-print { border: none !important; shadow: none !important; }
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -209,17 +210,28 @@
 
                     <!-- QR CODE (SISI KANAN) -->
                     <div class="space-y-6">
-                        <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border text-center transition-theme relative overflow-hidden']">
-                            <h3 class="text-xl font-bold mb-2">Self Check-in</h3>
-                            <p class="text-[10px] text-slate-500 mb-6 font-medium uppercase tracking-widest">Scan QR untuk Isi Mandiri</p>
+                        <div :class="[theme.card, 'qr-card-print p-8 rounded-2xl shadow-xl border text-center transition-theme relative overflow-hidden flex flex-col items-center']">
+                            <h3 class="text-xl font-bold mb-2">Self Check-in QR</h3>
+                            <p class="text-[10px] text-slate-500 mb-6 font-medium uppercase tracking-widest no-print">Tampilkan di meja tamu agar mereka bisa registrasi mandiri</p>
                             
-                            <div class="bg-slate-50 p-4 rounded-2xl inline-block mx-auto border border-slate-200 mb-4">
+                            <!-- PEMILIH KATEGORI AKTIF -->
+                            <div class="w-full mb-6 no-print">
+                                <label class="block text-left text-[10px] font-bold text-slate-400 uppercase mb-1 px-1">Pilih Kategori QR</label>
+                                <select v-model="qrKategori" @change="generateQRCode" class="w-full p-3 border rounded-xl bg-white font-bold outline-none focus:ring-2 focus:ring-slate-200">
+                                    <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                                </select>
+                            </div>
+
+                            <div class="bg-slate-50 p-4 rounded-2xl inline-block mx-auto border border-slate-200 mb-6">
                                 <div id="qrcode-container" class="bg-white p-2 rounded-lg"></div>
+                                <p class="mt-4 text-[10px] text-slate-400 font-bold uppercase tracking-wider">Kategori: <span class="text-slate-800">{{ qrKategori }}</span></p>
                             </div>
                             
-                            <button @click="window.print()" :class="[theme.button, 'w-full py-3 text-white rounded-lg flex items-center justify-center gap-2 font-bold no-print shadow-md']">
-                                <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Meja
-                            </button>
+                            <div class="w-full no-print">
+                                <button @click="window.print()" :class="[theme.button, 'w-full py-3 text-white rounded-xl flex items-center justify-center gap-2 font-bold shadow-md active:scale-95 transition-all']">
+                                    <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -327,7 +339,7 @@
                         <input type="number" v-model="maxGuests" class="w-full p-2 border rounded-lg outline-none">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold mb-1">Manajemen Kategori</label>
+                        <label class="block text-sm font-bold mb-1">Manajemen Kategori Sistem</label>
                         <div class="flex gap-2 mb-3">
                             <input type="text" id="catInput" class="flex-1 p-2 border rounded-lg outline-none" placeholder="Nama kategori baru...">
                             <button @click="addCategory" :class="[theme.primary, 'text-white px-4 rounded-lg font-bold']">Tambah</button>
@@ -345,7 +357,7 @@
                     <div class="grid grid-cols-1 gap-3">
                         <button v-for="(t, key) in themeOptions" :key="key" @click="currentTheme = key" 
                             :class="[currentTheme === key ? 'border-slate-800 bg-slate-50' : 'border-transparent bg-white', 'p-4 rounded-xl border-2 flex items-center gap-4 transition-all']">
-                            <div :class="[t.primary, 'w-6 h-6 rounded-full shadow-inner']"></div>
+                            <div :class="[t.primary, 'w-6 h-6 rounded-full shadow-inner']" :style="t.customStyle"></div>
                             <span class="font-bold text-sm">{{ t.name }}</span>
                         </button>
                     </div>
@@ -355,7 +367,7 @@
         </main>
     </div>
 
-  <script>
+    <script>
     const { createApp, ref, computed, onMounted, nextTick, watch } = Vue;
 
     createApp({
@@ -555,7 +567,6 @@
         }
     }).mount('#app');
 </script>
-
 
 </body>
 </html>
