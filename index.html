@@ -13,8 +13,6 @@
     <!-- jsPDF & AutoTable -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
-    <!-- QR Code Generator -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
@@ -45,13 +43,6 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-
-        #qrcode img {
-            margin: 0 auto;
-            border: 8px solid white;
-            border-radius: 12px;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        }
     </style>
 </head>
 <body class="transition-theme">
@@ -64,20 +55,6 @@
                 <span class="font-bold">{{ notificationMessage }}</span>
             </div>
         </transition>
-
-        <!-- MODAL QR CODE SELF CHECK-IN -->
-        <div v-if="showQRModal" class="fixed inset-0 bg-black bg-opacity-80 z-[200] flex items-center justify-center p-4">
-            <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center relative animate-fadeIn">
-                <button @click="showQRModal = false" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x"></i></button>
-                <h3 class="text-xl font-bold text-slate-900 mb-2 font-serif">Self Check-in QR</h3>
-                <p class="text-xs text-slate-500 mb-6 italic">Scan kode ini agar tamu bisa mengisi data langsung dari HP mereka dan masuk ke database.</p>
-                <div id="qrcode" class="mb-6 flex justify-center"></div>
-                <div class="space-y-2">
-                    <button @click="copyURL" class="text-[10px] text-slate-400 hover:text-slate-600 break-all font-mono underline">Salin Link Registrasi Mandiri</button>
-                </div>
-                <button @click="showQRModal = false" :class="[theme.primary, 'mt-6 w-full py-3 text-white rounded-xl font-bold']">Tutup</button>
-            </div>
-        </div>
 
         <!-- HEADER (Hanya Admin) -->
         <header v-if="!isSelfCheckIn" :class="[theme.primary, 'text-white shadow-lg sticky top-0 z-50 transition-theme no-print']">
@@ -127,8 +104,8 @@
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold mb-2">WhatsApp</label>
-                                    <input v-model="form.hp" required type="tel" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="08xx..." />
+                                    <label class="block text-sm font-semibold mb-2">No. HP (Angka Saja)</label>
+                                    <input v-model="form.hp" required type="number" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="08xx..." />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold mb-2">Kategori</label>
@@ -198,9 +175,6 @@
                                 <h2 class="text-xl font-bold flex items-center gap-2">
                                     <i data-lucide="edit-3" :class="theme.accent"></i> Registrasi Tamu (Manual)
                                 </h2>
-                                <button @click="generateQR" class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all">
-                                    <i data-lucide="qr-code" class="w-4 h-4"></i> QR Self Check-in
-                                </button>
                             </div>
                             <form @submit.prevent="submitGuest" class="space-y-4">
                                 <div>
@@ -209,8 +183,8 @@
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label class="block text-sm font-semibold mb-1">WhatsApp</label>
-                                        <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
+                                        <label class="block text-sm font-semibold mb-1">No. HP (Angka Saja)</label>
+                                        <input v-model="form.hp" required type="number" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
                                     </div>
                                     <div>
                                         <label class="block text-sm font-semibold mb-1">Kategori</label>
@@ -256,7 +230,10 @@
                     <h2 class="text-2xl font-bold">Database Tamu</h2>
                     <div class="flex flex-wrap gap-2">
                         <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-md transition-all active:scale-95">
-                            <i data-lucide="file-down" class="w-4 h-4"></i> Cetak PDF
+                            <i data-lucide="file-down" class="w-4 h-4"></i> Ekspor PDF Per Kategori
+                        </button>
+                        <button @click="resetAllData" class="bg-white border-2 border-red-500 text-red-500 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-500 hover:text-white text-sm font-bold shadow-md transition-all active:scale-95">
+                            <i data-lucide="refresh-ccw" class="w-4 h-4"></i> Reset Database
                         </button>
                     </div>
                 </div>
@@ -269,7 +246,7 @@
                                 <th class="p-4">Waktu</th>
                                 <th class="p-4">Nama Tamu</th>
                                 <th class="p-4">Kategori</th>
-                                <th class="p-4">WhatsApp</th>
+                                <th class="p-4">No. HP</th>
                                 <th class="p-4 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -317,14 +294,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- Tombol Berbahaya -->
-                <div class="p-8 rounded-2xl border-2 border-red-100 bg-red-50 space-y-4">
-                    <h3 class="text-red-600 font-bold flex items-center gap-2"><i data-lucide="alert-triangle"></i> Area Berbahaya</h3>
-                    <button @click="resetAllData" class="w-full bg-white border-2 border-red-500 text-red-500 py-3 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all">
-                        Reset Seluruh Database Tamu
-                    </button>
-                </div>
             </section>
 
         </main>
@@ -335,7 +304,7 @@
 
     createApp({
         setup() {
-            // URL Google Apps Script Anda
+            // URL Google Apps Script
             const DATABASE_URL = 'https://script.google.com/macros/s/AKfycbwZs8Pkk1dPnIeTuIwcPLa01_d7zUhknHiQCgUrYggXTsaFQRuTvw2X9bXuGCidJ9J0Jg/exec';
 
             const activeTab = ref('beranda');
@@ -348,7 +317,6 @@
             const showNotification = ref(false);
             const notificationMessage = ref('Data Berhasil Disimpan!');
             const isSelfCheckIn = ref(false);
-            const showQRModal = ref(false);
             
             const form = ref({ nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' });
 
@@ -364,12 +332,6 @@
                 romantic: { name: 'Blush Pink', primary: 'bg-rose-500', secondary: 'bg-rose-50', accent: 'text-rose-600', button: 'bg-rose-600 hover:bg-rose-500', card: 'bg-white', text: 'text-rose-900' },
                 luxury: { name: 'Royal Amber', primary: 'bg-amber-800', secondary: 'bg-stone-50', accent: 'text-amber-800', button: 'bg-amber-800 hover:bg-amber-700', card: 'bg-white', text: 'text-stone-900' }
             };
-
-            const selfCheckInURL = computed(() => {
-                const url = new URL(window.location.href);
-                url.searchParams.set('mode', 'checkin');
-                return url.toString();
-            });
 
             const theme = computed(() => themeOptions[currentTheme.value]);
 
@@ -419,14 +381,13 @@
             const submitGuest = async () => {
                 const newGuest = {
                     nama: form.value.nama,
-                    hp: form.value.hp,
+                    hp: String(form.value.hp), // Pastikan string angka saja
                     alamat: form.value.alamat,
                     kategori: form.value.kategori,
                     ucapan: form.value.ucapan,
                     time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                 };
 
-                // Optimistic UI update
                 guests.value.unshift({ id: Date.now(), ...newGuest });
                 
                 notificationMessage.value = isSelfCheckIn.value ? 'Terima kasih, kehadiran Anda tercatat!' : 'Data Berhasil Disimpan!';
@@ -443,7 +404,7 @@
                     form.value = { ...form.value, nama: '', hp: '', alamat: '', ucapan: '' };
                     nextTick(() => lucide.createIcons());
                 } catch (e) {
-                    console.error("Gagal mengirim ke Google Sheets");
+                    console.error("Gagal mengirim ke database");
                 }
             };
 
@@ -475,39 +436,45 @@
                 }
             };
 
-            const generateQR = () => {
-                showQRModal.value = true;
-                nextTick(() => {
-                    const container = document.getElementById("qrcode");
-                    container.innerHTML = "";
-                    new QRCode(container, {
-                        text: selfCheckInURL.value,
-                        width: 256,
-                        height: 256,
-                        colorDark: "#000000",
-                        colorLight: "#ffffff",
-                        correctLevel: QRCode.CorrectLevel.H
-                    });
-                });
-            };
-
-            const copyURL = () => {
-                navigator.clipboard.writeText(selfCheckInURL.value);
-                notificationMessage.value = "Link berhasil disalin!";
-                showNotification.value = true;
-                setTimeout(() => showNotification.value = false, 2000);
-            };
-
             const exportToPDF = () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
+                
+                doc.setFontSize(18);
                 doc.text(`LAPORAN TAMU: ${weddingInfo.mempelai}`, 14, 15);
-                doc.autoTable({
-                    startY: 25,
-                    head: [['No', 'Waktu', 'Nama', 'Kategori', 'WhatsApp']],
-                    body: guests.value.map((g, i) => [i + 1, g.time, g.nama, g.kategori, g.hp]),
+                
+                doc.setFontSize(12);
+                doc.text(`Total Keseluruhan: ${guests.value.length} Tamu`, 14, 25);
+
+                let currentY = 35;
+
+                // Tulis rincian per kategori
+                categories.value.forEach(catName => {
+                    const filtered = guests.value.filter(g => g.kategori === catName);
+                    
+                    doc.setFontSize(14);
+                    doc.setTextColor(40, 40, 40);
+                    doc.text(`${catName.toUpperCase()} (${filtered.length} Tamu)`, 14, currentY);
+                    
+                    doc.autoTable({
+                        startY: currentY + 5,
+                        head: [['No', 'Waktu', 'Nama', 'No. HP', 'Alamat/Instansi']],
+                        body: filtered.map((g, i) => [i + 1, g.time, g.nama, g.hp, g.alamat]),
+                        theme: 'grid',
+                        headStyles: { fillColor: [100, 100, 100] },
+                        margin: { bottom: 20 }
+                    });
+
+                    currentY = doc.lastAutoTable.finalY + 15;
+                    
+                    // Cek jika halaman hampir penuh
+                    if (currentY > 260) {
+                        doc.addPage();
+                        currentY = 20;
+                    }
                 });
-                doc.save(`Daftar_Hadir.pdf`);
+
+                doc.save(`Laporan_Lengkap_Tamu.pdf`);
             };
 
             onMounted(() => {
@@ -527,7 +494,6 @@
                 categories, newCategory, showNotification, notificationMessage, isSelfCheckIn, form, weddingInfo,
                 themeOptions, theme, statsPerCategory, 
                 submitGuest, deleteGuest, resetAllData, exportToPDF,
-                showQRModal, selfCheckInURL, generateQR, copyURL,
                 addCategory, removeCategory
             };
         }
