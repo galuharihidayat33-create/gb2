@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ARinvitation - Sistem Buku Tamu</title>
+    <title>ARinvitation - Buku Tamu Digital</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Vue JS -->
@@ -43,22 +43,23 @@
             header, nav, .no-print { display: none !important; }
             .print-only { display: block !important; }
             body { background: white !important; color: black !important; }
-            .qr-card-print { border: none !important; box-shadow: none !important; margin: 0 auto; }
         }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
 <body class="transition-theme">
     <div id="app" v-cloak :class="[theme.secondary, theme.text, 'min-h-screen relative']">
         
-        <!-- NOTIFIKASI BERHASIL -->
+        <!-- NOTIFIKASI -->
         <transition name="slide-up">
             <div v-if="showNotification" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] bg-green-600 text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-3">
                 <i data-lucide="check-circle" class="w-5 h-5"></i>
-                <span class="font-bold text-sm">Data Berhasil Disimpan!</span>
+                <span class="font-bold">Data Berhasil Disimpan!</span>
             </div>
         </transition>
 
-        <!-- NAVIGASI ATAS -->
+        <!-- HEADER -->
         <header v-if="!isSelfCheckIn" :class="[theme.primary, 'text-white shadow-lg sticky top-0 z-50 transition-theme no-print']">
             <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                 <div class="flex items-center space-x-2">
@@ -74,7 +75,7 @@
                         <i data-lucide="user-plus" class="w-4 h-4"></i> <span>Registrasi</span>
                     </button>
                     <button @click="activeTab = 'database'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'database'}">
-                        <i data-lucide="database" class="w-4 h-4"></i> <span>Laporan</span>
+                        <i data-lucide="database" class="w-4 h-4"></i> <span>Laporan Lengkap</span>
                     </button>
                     <button @click="activeTab = 'pengaturan'" class="flex items-center space-x-1 hover:opacity-80" :class="{'border-b-2 border-white': activeTab === 'pengaturan'}">
                         <i data-lucide="settings" class="w-4 h-4"></i> <span>Pengaturan</span>
@@ -85,12 +86,12 @@
 
         <main class="max-w-6xl mx-auto p-4 md:p-8">
             
-            <!-- TAMPILAN KHUSUS SCAN QR (Self Check-in) -->
-            <section v-if="isSelfCheckIn" class="animate-fadeIn py-6">
+            <!-- MODE CHECK-IN MANDIRI -->
+            <section v-if="isSelfCheckIn" class="animate-fadeIn py-10">
                 <div class="max-w-xl mx-auto">
-                    <div class="text-center mb-8">
-                        <h1 class="text-4xl font-serif mb-2">{{ weddingInfo.mempelai }}</h1>
-                        <p class="text-slate-500 italic">Terima kasih telah hadir di hari bahagia kami</p>
+                    <div class="text-center mb-10">
+                        <h1 class="text-3xl font-serif mb-2">{{ weddingInfo.mempelai }}</h1>
+                        <p class="text-slate-500 italic">Selamat Datang di Acara Pernikahan Kami</p>
                     </div>
                     
                     <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border']">
@@ -98,43 +99,42 @@
                         <form @submit.prevent="submitGuest" class="space-y-4">
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Nama Lengkap</label>
-                                <input v-model="form.nama" required class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Siapa nama Anda?" />
+                                <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ketik nama..." />
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-semibold mb-1">Nomor WhatsApp</label>
-                                    <!-- Perbaikan Input HP -->
-                                    <input v-model="form.hp" required type="tel" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="08xxxx" />
+                                    <label class="block text-sm font-semibold mb-1">WhatsApp</label>
+                                    <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">Kategori</label>
-                                    <select v-model="form.kategori" class="w-full p-4 rounded-xl border border-slate-200 outline-none bg-slate-50">
+                                    <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
                                         <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                                     </select>
                                 </div>
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
-                                <input v-model="form.alamat" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Kota asal..." />
+                                <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Asal kota/instansi..." />
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
-                                <textarea v-model="form.ucapan" rows="3" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Berikan doa restu Anda..."></textarea>
+                                <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tulis doa restu..."></textarea>
                             </div>
-                            <button type="submit" :class="[theme.button, 'w-full py-5 text-white font-bold rounded-2xl shadow-lg text-lg transform transition-all active:scale-95']">
-                                Kirim Kehadiran
+                            <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg']">
+                                Kirim Kedatangan
                             </button>
                         </form>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB BERANDA -->
+            <!-- BERANDA -->
             <section v-if="!isSelfCheckIn && activeTab === 'beranda'" class="space-y-8 animate-fadeIn no-print">
-                <div :class="[theme.card, 'p-10 rounded-3xl text-center shadow-xl border transition-theme']">
-                    <h2 :class="[theme.accent, 'text-sm uppercase tracking-[0.3em] mb-4 font-semibold']">Resepsi Pernikahan</h2>
+                <div :class="[theme.card, 'p-10 rounded-3xl text-center shadow-xl border relative overflow-hidden transition-theme']">
+                    <h2 :class="[theme.accent, 'text-sm uppercase tracking-[0.3em] mb-4 font-semibold']">Wedding Reception</h2>
                     <h1 class="text-5xl md:text-7xl font-serif mb-6">{{ weddingInfo.mempelai }}</h1>
-                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-lg text-slate-500">
+                    <div class="flex flex-col md:flex-row items-center justify-center gap-4 text-lg">
                         <span class="flex items-center gap-2"><i data-lucide="calendar" class="w-5 h-5"></i> {{ weddingInfo.tanggal }}</span>
                         <span class="hidden md:block">|</span>
                         <span class="flex items-center gap-2"><i data-lucide="map-pin" class="w-5 h-5"></i> {{ weddingInfo.lokasi }}</span>
@@ -142,21 +142,22 @@
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div :class="[theme.card, 'p-6 rounded-2xl shadow-md border']">
-                        <h3 class="font-bold text-lg mb-4 flex items-center justify-between">
-                            <span>Status Kapasitas</span>
-                            <span class="text-xs text-slate-400">{{ guests.length }} / {{ maxGuests }}</span>
-                        </h3>
-                        <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden mb-2">
-                            <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: Math.min((guests.length / maxGuests * 100), 100) + '%' }"></div>
+                    <div :class="[theme.card, 'p-6 rounded-2xl shadow-md border transition-theme']">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="users" :class="theme.accent"></i> Kapasitas</h3>
+                            <span class="text-2xl font-black">{{ maxGuests }}</span>
                         </div>
+                        <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
+                            <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: (guests.length / maxGuests * 100) + '%' }"></div>
+                        </div>
+                        <p class="mt-2 text-sm text-slate-500 text-right">Terisi: {{ guests.length }} Tamu</p>
                     </div>
 
                     <div :class="[theme.card, 'md:col-span-2 p-6 rounded-2xl shadow-md border transition-theme']">
-                        <h3 class="font-bold text-lg mb-4">Statistik Per Kategori</h3>
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" :class="theme.accent"></i> Ringkasan Kedatangan</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                            <div v-for="cat in statsPerCategory" :key="cat.name" class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                <p class="text-[10px] text-slate-400 font-bold uppercase">{{ cat.name }}</p>
+                            <div v-for="cat in statsPerCategory" :key="cat.name" class="bg-black bg-opacity-5 p-3 rounded-xl border border-black border-opacity-5">
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">{{ cat.name }}</p>
                                 <p class="text-xl font-bold">{{ cat.count }}</p>
                             </div>
                         </div>
@@ -164,87 +165,102 @@
                 </div>
             </section>
 
-            <!-- TAB REGISTRASI -->
+            <!-- REGISTRASI + QR + DATABASE TERINTEGRASI -->
             <section v-if="!isSelfCheckIn && activeTab === 'registrasi'" class="space-y-8 animate-fadeIn">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- FORM INPUT MANUAL -->
-                    <div class="lg:col-span-2">
+                    
+                    <!-- FORM INPUT (SISI KIRI) -->
+                    <div class="lg:col-span-2 space-y-6">
                         <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme no-print']">
                             <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                                <i data-lucide="user-edit" :class="theme.accent"></i> Input Manual Tamu
+                                <i data-lucide="edit-3" :class="theme.accent"></i> Registrasi Tamu
                             </h2>
                             <form @submit.prevent="submitGuest" class="space-y-4">
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">Nama Tamu</label>
-                                    <input v-model="form.nama" required class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Input nama tamu..." />
+                                    <input v-model="form.nama" required class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Ketik nama lengkap..." />
                                 </div>
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
                                         <label class="block text-sm font-semibold mb-1">WhatsApp</label>
-                                        <input v-model="form.hp" required type="tel" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="08xxxxx" />
+                                        <input v-model="form.hp" required type="tel" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="08xx..." />
                                     </div>
                                     <div>
                                         <label class="block text-sm font-semibold mb-1">Kategori</label>
-                                        <select v-model="form.kategori" class="w-full p-4 rounded-xl border border-slate-200 outline-none bg-slate-50">
+                                        <select v-model="form.kategori" class="w-full p-3 rounded-lg border border-slate-200 outline-none bg-white">
                                             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div>
                                     <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
-                                    <input v-model="form.alamat" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Alamat tamu..." />
+                                    <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Kota atau asal instansi..." />
                                 </div>
-                                <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-2xl shadow-lg transition-all active:scale-95']">
-                                    Simpan Tamu
+                                <div>
+                                    <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
+                                    <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tuliskan doa restu..."></textarea>
+                                </div>
+                                <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95']">
+                                    Simpan Kedatangan
                                 </button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- PRINT QR QR CODE -->
+                    <!-- QR CODE (SISI KANAN) -->
                     <div class="space-y-6">
-                        <div :class="[theme.card, 'qr-card-print p-8 rounded-3xl shadow-xl border text-center transition-theme']">
-                            <h3 class="text-xl font-bold font-serif mb-1">{{ weddingInfo.mempelai }}</h3>
-                            <p class="text-[10px] text-slate-400 font-bold tracking-widest uppercase mb-4">E-Guest Book</p>
+                        <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border text-center transition-theme relative overflow-hidden']">
+                            <h3 class="text-xl font-bold mb-2">Self Check-in</h3>
+                            <p class="text-[10px] text-slate-500 mb-6 font-medium uppercase tracking-widest">Scan QR untuk Isi Mandiri</p>
                             
-                            <div class="bg-white p-4 rounded-2xl inline-block shadow-inner border border-slate-100 mb-6">
-                                <div id="qrcode-container"></div>
+                            <div class="bg-slate-50 p-4 rounded-2xl inline-block mx-auto border border-slate-200 mb-4">
+                                <div id="qrcode-container" class="bg-white p-2 rounded-lg"></div>
                             </div>
-
-                            <p class="text-xs text-slate-500 italic mb-6">Pindai untuk melakukan Check-in Mandiri</p>
                             
-                            <button @click="window.print()" :class="[theme.button, 'w-full py-3 text-white rounded-xl flex items-center justify-center gap-2 font-bold shadow-md no-print']">
-                                <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Code
+                            <button @click="window.print()" :class="[theme.button, 'w-full py-3 text-white rounded-lg flex items-center justify-center gap-2 font-bold no-print shadow-md']">
+                                <i data-lucide="printer" class="w-4 h-4"></i> Cetak QR Meja
                             </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- DAFTAR RECENT -->
-                <div :class="[theme.card, 'p-6 rounded-2xl shadow-lg border no-print mt-8 transition-theme']">
-                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
-                        <i data-lucide="clock" class="w-5 h-5 text-slate-400"></i> Tamu Terbaru
-                    </h3>
-                    <div class="overflow-x-auto">
+                <!-- DATABASE DI MENU REGISTRASI -->
+                <div :class="[theme.card, 'p-6 rounded-2xl shadow-lg border no-print mt-8']">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold flex items-center gap-2">
+                            <i data-lucide="list" class="w-5 h-5 text-slate-400"></i> Database Kedatangan Terkini
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <select v-model="regFilter" class="text-xs p-2 border rounded-lg bg-white outline-none">
+                                <option value="all">Semua Kategori</option>
+                                <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto rounded-xl border border-slate-100">
                         <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-bold">
+                            <thead class="bg-slate-50 text-slate-400 font-bold uppercase text-[10px]">
                                 <tr>
                                     <th class="p-4">Waktu</th>
-                                    <th class="p-4">Nama</th>
+                                    <th class="p-4">Nama Tamu</th>
                                     <th class="p-4">Kategori</th>
-                                    <th class="p-4 text-center">Aksi</th>
+                                    <th class="p-4">Ucapan</th>
+                                    <th class="p-4 text-center">Hapus</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-slate-50">
-                                <tr v-for="g in guests.slice(0, 5)" :key="g.id">
+                                <tr v-for="g in paginatedRegGuests" :key="g.id" class="hover:bg-slate-50">
                                     <td class="p-4 text-slate-400 font-mono text-xs">{{ g.time }}</td>
                                     <td class="p-4 font-bold">{{ g.nama }}</td>
-                                    <td class="p-4">
-                                        <span :class="[theme.primary, 'px-2 py-0.5 rounded text-[9px] text-white font-bold uppercase']">{{ g.kategori }}</span>
-                                    </td>
+                                    <td class="p-4"><span :class="[theme.primary, 'px-2 py-0.5 rounded text-[9px] text-white font-bold uppercase']">{{ g.kategori }}</span></td>
+                                    <td class="p-4 text-slate-500 italic truncate max-w-[200px]">{{ g.ucapan || '-' }}</td>
                                     <td class="p-4 text-center">
-                                        <button @click="deleteGuest(g.id)" class="text-red-300 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                        <button @click="deleteGuest(g.id)" class="text-red-300 hover:text-red-500"><i data-lucide="x" class="w-4 h-4"></i></button>
                                     </td>
+                                </tr>
+                                <tr v-if="paginatedRegGuests.length === 0">
+                                    <td colspan="5" class="p-8 text-center text-slate-300 italic text-xs">Belum ada data kedatangan.</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -252,57 +268,27 @@
                 </div>
             </section>
 
-            <!-- TAB PENGATURAN -->
-            <section v-if="!isSelfCheckIn && activeTab === 'pengaturan'" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn no-print">
-                <!-- MANAJEMEN KATEGORI -->
-                <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
-                    <h3 class="text-xl font-bold flex items-center gap-2">
-                        <i data-lucide="tag" :class="theme.accent"></i> Manajemen Kategori
-                    </h3>
-                    <div class="space-y-4">
-                        <div class="flex gap-2">
-                            <input type="text" v-model="newCategoryInput" @keyup.enter="addNewCategory" class="flex-1 p-3 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-slate-400" placeholder="Nama kategori baru...">
-                            <button @click="addNewCategory" :class="[theme.button, 'text-white px-5 rounded-xl font-bold']">Tambah</button>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <div v-for="cat in categories" :key="cat" class="bg-slate-50 px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-3 border border-slate-200">
-                                {{ cat }}
-                                <button @click="removeCategory(cat)" class="text-red-500 hover:scale-125 transition-transform">×</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TEMA & TARGET -->
-                <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-6']">
-                    <h3 class="text-xl font-bold flex items-center gap-2">
-                        <i data-lucide="settings-2" :class="theme.accent"></i> Pengaturan Global
-                    </h3>
-                    <div>
-                        <label class="block text-sm font-bold mb-2">Target Undangan</label>
-                        <input type="number" v-model="maxGuests" class="w-full p-3 border rounded-xl outline-none focus:ring-2 focus:ring-slate-400">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-bold mb-3">Warna Aplikasi</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <button v-for="(t, key) in themeOptions" :key="key" @click="currentTheme = key" 
-                                :class="[currentTheme === key ? 'ring-2 ring-offset-2 ring-slate-800' : '', t.primary, 'h-10 rounded-lg shadow-sm']">
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB DATABASE / LAPORAN -->
+            <!-- LAPORAN LENGKAP ADMIN -->
             <section v-if="!isSelfCheckIn && activeTab === 'database'" class="space-y-6 animate-fadeIn no-print">
-                <div class="flex justify-between items-center">
-                    <h2 class="text-2xl font-bold">Data Lengkap Kehadiran</h2>
-                    <button @click="exportToPDF" class="bg-red-600 text-white px-6 py-2 rounded-xl flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-lg">
-                        <i data-lucide="file-text" class="w-4 h-4"></i> Export PDF
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <h2 class="text-2xl font-bold">Laporan Kedatangan</h2>
+                    <div class="flex gap-2">
+                        <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-md">
+                            <i data-lucide="file-down" class="w-4 h-4"></i> Cetak PDF (Grup Kategori)
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex overflow-x-auto pb-2 gap-2 no-scrollbar border-b border-slate-100">
+                    <button @click="dbFilter = 'all'" :class="[dbFilter === 'all' ? theme.primary + ' text-white' : 'bg-white border text-slate-500', 'px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition-all']">
+                        Semua ({{ guests.length }})
+                    </button>
+                    <button v-for="cat in statsPerCategory" :key="cat.name" @click="dbFilter = cat.name" :class="[dbFilter === cat.name ? theme.primary + ' text-white' : 'bg-white border text-slate-500', 'px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap shadow-sm transition-all']">
+                        {{ cat.name }} ({{ cat.count }})
                     </button>
                 </div>
 
-                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
                     <table class="w-full text-left">
                         <thead class="bg-slate-50 border-b text-[10px] uppercase text-slate-400 font-bold">
                             <tr>
@@ -311,27 +297,58 @@
                                 <th class="p-4">Nama Tamu</th>
                                 <th class="p-4">WhatsApp</th>
                                 <th class="p-4">Kategori</th>
-                                <th class="p-4">Alamat</th>
-                                <th class="p-4 text-center">Hapus</th>
+                                <th class="p-4 text-center">Aksi</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(g, index) in guests" :key="g.id" class="hover:bg-slate-50 transition-colors">
+                            <tr v-for="(g, index) in filteredGuests" :key="g.id" class="hover:bg-slate-50 transition-colors">
                                 <td class="p-4 text-xs font-bold text-slate-300">{{ index + 1 }}</td>
                                 <td class="p-4 text-xs text-slate-400 whitespace-nowrap">{{ g.time }}</td>
                                 <td class="p-4 font-bold">{{ g.nama }}</td>
                                 <td class="p-4 text-sm font-mono text-slate-600">{{ g.hp }}</td>
                                 <td class="p-4"><span :class="[theme.primary, 'px-2 py-0.5 rounded text-[10px] text-white font-bold uppercase']">{{ g.kategori }}</span></td>
-                                <td class="p-4 text-sm text-slate-500">{{ g.alamat || '-' }}</td>
                                 <td class="p-4 text-center">
-                                    <button @click="deleteGuest(g.id)" class="text-red-300 hover:text-red-600 p-1">
+                                    <button @click="deleteGuest(g.id)" class="text-red-300 hover:text-red-600 transition-all p-1">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
-                    <div v-if="guests.length === 0" class="p-20 text-center text-slate-300 italic">Data belum tersedia</div>
+                </div>
+            </section>
+
+            <!-- PENGATURAN -->
+            <section v-if="!isSelfCheckIn && activeTab === 'pengaturan'" class="grid grid-cols-1 md:grid-cols-2 gap-8 animate-fadeIn no-print">
+                <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="settings" :class="theme.accent"></i> Kontrol Data</h3>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Target Kuota Tamu</label>
+                        <input type="number" v-model="maxGuests" class="w-full p-2 border rounded-lg outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-bold mb-1">Manajemen Kategori</label>
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="catInput" class="flex-1 p-2 border rounded-lg outline-none" placeholder="Nama kategori baru...">
+                            <button @click="addCategory" :class="[theme.primary, 'text-white px-4 rounded-lg font-bold']">Tambah</button>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <span v-for="cat in categories" :key="cat" class="bg-slate-100 px-3 py-1 rounded-full text-[11px] font-bold flex items-center gap-2 border">
+                                {{ cat }} <button @click="removeCategory(cat)" class="text-red-500 font-black">×</button>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="palette" :class="theme.accent"></i> Tema Aplikasi</h3>
+                    <div class="grid grid-cols-1 gap-3">
+                        <button v-for="(t, key) in themeOptions" :key="key" @click="currentTheme = key" 
+                            :class="[currentTheme === key ? 'border-slate-800 bg-slate-50' : 'border-transparent bg-white', 'p-4 rounded-xl border-2 flex items-center gap-4 transition-all']">
+                            <div :class="[t.primary, 'w-6 h-6 rounded-full shadow-inner']"></div>
+                            <span class="font-bold text-sm">{{ t.name }}</span>
+                        </button>
+                    </div>
                 </div>
             </section>
 
@@ -538,6 +555,19 @@
         }
     }).mount('#app');
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 </body>
 </html>
