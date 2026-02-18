@@ -38,8 +38,6 @@
             body { background: white !important; color: black !important; }
         }
 
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        
         .animate-fadeIn {
             animation: fadeIn 0.5s ease-in-out forwards;
         }
@@ -67,17 +65,17 @@
             </div>
         </transition>
 
-        <!-- MODAL QR CODE -->
+        <!-- MODAL QR CODE SELF CHECK-IN -->
         <div v-if="showQRModal" class="fixed inset-0 bg-black bg-opacity-80 z-[200] flex items-center justify-center p-4">
             <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center relative animate-fadeIn">
                 <button @click="showQRModal = false" class="absolute top-4 right-4 text-slate-400"><i data-lucide="x"></i></button>
                 <h3 class="text-xl font-bold text-slate-900 mb-2 font-serif">Self Check-in QR</h3>
-                <p class="text-xs text-slate-500 mb-6 italic">Arahkan kamera tamu ke kode di bawah ini</p>
+                <p class="text-xs text-slate-500 mb-6 italic">Scan kode ini agar tamu bisa mengisi data langsung dari HP mereka dan masuk ke database.</p>
                 <div id="qrcode" class="mb-6 flex justify-center"></div>
                 <div class="space-y-2">
-                    <button @click="copyURL" class="text-[10px] text-slate-400 hover:text-slate-600 break-all font-mono underline">Salin Link Registrasi</button>
+                    <button @click="copyURL" class="text-[10px] text-slate-400 hover:text-slate-600 break-all font-mono underline">Salin Link Registrasi Mandiri</button>
                 </div>
-                <button @click="showQRModal = false" :class="[theme.primary, 'mt-6 w-full py-3 text-white rounded-xl font-bold']">Selesai</button>
+                <button @click="showQRModal = false" :class="[theme.primary, 'mt-6 w-full py-3 text-white rounded-xl font-bold']">Tutup</button>
             </div>
         </div>
 
@@ -114,7 +112,7 @@
                     <div class="text-center mb-10">
                         <h2 :class="[theme.accent, 'text-xs uppercase tracking-[0.3em] mb-4 font-semibold']">Digital Guestbook</h2>
                         <h1 class="text-4xl font-serif mb-2">{{ weddingInfo.mempelai }}</h1>
-                        <p class="text-slate-500 italic">Terima kasih atas kehadiran Bapak/Ibu/Saudara/i</p>
+                        <p class="text-slate-500 italic">Selamat datang! Silakan isi data kehadiran Anda.</p>
                     </div>
                     
                     <div :class="[theme.card, 'p-8 rounded-3xl shadow-2xl border transition-theme']">
@@ -125,7 +123,7 @@
                         <form @submit.prevent="submitGuest" class="space-y-5">
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Nama Lengkap</label>
-                                <input v-model="form.nama" required class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Ketik nama Anda..." />
+                                <input v-model="form.nama" required class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Nama Anda..." />
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
@@ -141,14 +139,14 @@
                             </div>
                             <div>
                                 <label class="block text-sm font-semibold mb-2">Alamat / Instansi</label>
-                                <input v-model="form.alamat" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Asal kota/instansi..." />
+                                <input v-model="form.alamat" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Kota/Instansi..." />
                             </div>
                             <div>
-                                <label class="block text-sm font-semibold mb-2">Ucapan & Doa Restu</label>
-                                <textarea v-model="form.ucapan" rows="3" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Tulis doa untuk mempelai..."></textarea>
+                                <label class="block text-sm font-semibold mb-2">Ucapan & Doa</label>
+                                <textarea v-model="form.ucapan" rows="3" class="w-full p-4 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400 bg-slate-50" placeholder="Tulis doa Anda..."></textarea>
                             </div>
                             <button type="submit" :class="[theme.button, 'w-full py-5 text-white font-bold rounded-2xl shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2']">
-                                <i data-lucide="send" class="w-5 h-5"></i> Kirim Kehadiran
+                                <i data-lucide="send" class="w-5 h-5"></i> Konfirmasi Kehadiran
                             </button>
                         </form>
                     </div>
@@ -170,17 +168,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div :class="[theme.card, 'p-6 rounded-2xl shadow-md border transition-theme']">
                         <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="users" :class="theme.accent"></i> Kapasitas</h3>
-                            <span class="text-2xl font-black">{{ maxGuests }}</span>
+                            <h3 class="font-bold text-lg flex items-center gap-2"><i data-lucide="users" :class="theme.accent"></i> Total Hadir</h3>
+                            <span class="text-2xl font-black">{{ guests.length }}</span>
                         </div>
                         <div class="w-full bg-slate-100 rounded-full h-4 overflow-hidden">
                             <div :class="[theme.primary, 'h-full transition-all duration-1000']" :style="{ width: Math.min((guests.length / maxGuests * 100), 100) + '%' }"></div>
                         </div>
-                        <p class="mt-2 text-sm text-slate-500 text-right">Terisi: {{ guests.length }} Tamu</p>
+                        <p class="mt-2 text-sm text-slate-500 text-right">Target: {{ maxGuests }} Tamu</p>
                     </div>
 
                     <div :class="[theme.card, 'md:col-span-2 p-6 rounded-2xl shadow-md border transition-theme']">
-                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" :class="theme.accent"></i> Ringkasan Kategori</h3>
+                        <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><i data-lucide="bar-chart-3" :class="theme.accent"></i> Statistik Kategori</h3>
                         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
                             <div v-for="cat in statsPerCategory" :key="cat.name" class="bg-black bg-opacity-5 p-3 rounded-xl border border-black border-opacity-5">
                                 <p class="text-[10px] text-slate-500 font-bold uppercase">{{ cat.name }}</p>
@@ -194,16 +192,14 @@
             <!-- REGISTRASI (Admin) -->
             <section v-if="!isSelfCheckIn && activeTab === 'registrasi'" class="space-y-6 animate-fadeIn">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- Form Input (Kiri) -->
                     <div class="lg:col-span-2 space-y-6">
                         <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme no-print']">
                             <div class="flex justify-between items-center mb-6">
                                 <h2 class="text-xl font-bold flex items-center gap-2">
-                                    <i data-lucide="edit-3" :class="theme.accent"></i> Input Tamu Baru
+                                    <i data-lucide="edit-3" :class="theme.accent"></i> Registrasi Tamu (Manual)
                                 </h2>
-                                <!-- TOMBOL QR DI SINI -->
                                 <button @click="generateQR" class="flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-lg text-xs font-bold hover:bg-slate-200 transition-all">
-                                    <i data-lucide="qr-code" class="w-4 h-4"></i> Buka Self Check-in QR
+                                    <i data-lucide="qr-code" class="w-4 h-4"></i> QR Self Check-in
                                 </button>
                             </div>
                             <form @submit.prevent="submitGuest" class="space-y-4">
@@ -227,22 +223,17 @@
                                     <label class="block text-sm font-semibold mb-1">Alamat / Instansi</label>
                                     <input v-model="form.alamat" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Kota atau asal instansi..." />
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-1">Ucapan & Doa</label>
-                                    <textarea v-model="form.ucapan" rows="3" class="w-full p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tuliskan doa restu..."></textarea>
-                                </div>
                                 <button type="submit" :class="[theme.button, 'w-full py-4 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95']">
-                                    Simpan Kehadiran
+                                    Simpan & Check-in
                                 </button>
                             </form>
                         </div>
                     </div>
 
-                    <!-- Side Info / Recent (Kanan) -->
                     <div class="space-y-6">
                         <div :class="[theme.card, 'p-6 rounded-2xl shadow-lg border no-print']">
                             <h3 class="text-sm font-bold mb-4 flex items-center gap-2 uppercase tracking-wider text-slate-400">
-                                <i data-lucide="history" class="w-4 h-4"></i> Baru Saja Hadir
+                                <i data-lucide="history" class="w-4 h-4"></i> Kedatangan Terakhir
                             </h3>
                             <div class="space-y-3">
                                 <div v-for="g in guests.slice(0, 5)" :key="g.id" class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
@@ -254,7 +245,6 @@
                                 </div>
                                 <div v-if="guests.length === 0" class="text-center py-6 text-slate-400 italic text-xs">Belum ada data</div>
                             </div>
-                            <button @click="activeTab = 'database'" class="w-full mt-4 py-2 text-xs font-bold text-slate-500 border-t pt-4 hover:text-slate-800">Lihat Semua Database →</button>
                         </div>
                     </div>
                 </div>
@@ -263,11 +253,8 @@
             <!-- LAPORAN (Admin) -->
             <section v-if="!isSelfCheckIn && activeTab === 'database'" class="space-y-6 animate-fadeIn no-print">
                 <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                    <h2 class="text-2xl font-bold">Laporan Kedatangan</h2>
+                    <h2 class="text-2xl font-bold">Database Tamu</h2>
                     <div class="flex flex-wrap gap-2">
-                        <button @click="resetAllData" class="bg-white border-2 border-red-500 text-red-500 px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-50 text-sm font-bold shadow-sm transition-all active:scale-95">
-                            <i data-lucide="trash" class="w-4 h-4"></i> Reset Database
-                        </button>
                         <button @click="exportToPDF" class="bg-red-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-red-700 text-sm font-bold shadow-md transition-all active:scale-95">
                             <i data-lucide="file-down" class="w-4 h-4"></i> Cetak PDF
                         </button>
@@ -287,7 +274,7 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-100">
-                            <tr v-for="(g, index) in filteredGuests" :key="g.id" class="hover:bg-slate-50">
+                            <tr v-for="(g, index) in guests" :key="g.id" class="hover:bg-slate-50">
                                 <td class="p-4 text-xs font-bold text-slate-300">{{ index + 1 }}</td>
                                 <td class="p-4 text-xs text-slate-400 whitespace-nowrap">{{ g.time }}</td>
                                 <td class="p-4 font-bold">{{ g.nama }}</td>
@@ -303,10 +290,10 @@
             </section>
 
             <!-- PENGATURAN (Admin) -->
-            <section v-if="!isSelfCheckIn && activeTab === 'pengaturan'" class="animate-fadeIn no-print max-w-2xl mx-auto">
+            <section v-if="!isSelfCheckIn && activeTab === 'pengaturan'" class="animate-fadeIn no-print max-w-2xl mx-auto space-y-6">
+                <!-- Tema -->
                 <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
                     <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="palette" :class="theme.accent"></i> Tema Aplikasi</h3>
-                    <p class="text-xs text-slate-400 mb-4 italic">Pilih tampilan yang paling sesuai dengan nuansa acara Anda.</p>
                     <div class="grid grid-cols-1 gap-3">
                         <button v-for="(t, key) in themeOptions" :key="key" @click="currentTheme = key" 
                             :class="[currentTheme === key ? 'border-slate-800 bg-slate-50 shadow-inner' : 'border-transparent bg-white', 'p-4 rounded-xl border-2 flex items-center gap-4 transition-all']">
@@ -314,6 +301,29 @@
                             <span class="font-bold text-sm">{{ t.name }}</span>
                         </button>
                     </div>
+                </div>
+
+                <!-- Manajemen Kategori -->
+                <div :class="[theme.card, 'p-8 rounded-2xl shadow-xl border transition-theme space-y-4']">
+                    <h3 class="text-xl font-bold flex items-center gap-2"><i data-lucide="tags" :class="theme.accent"></i> Edit Kategori Tamu</h3>
+                    <div class="flex gap-2">
+                        <input v-model="newCategory" @keyup.enter="addCategory" class="flex-1 p-3 rounded-lg border border-slate-200 outline-none focus:ring-2 focus:ring-slate-400" placeholder="Tambah kategori..." />
+                        <button @click="addCategory" :class="[theme.primary, 'text-white px-4 rounded-lg font-bold shadow-md']"><i data-lucide="plus"></i></button>
+                    </div>
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        <div v-for="(cat, index) in categories" :key="index" class="bg-slate-100 px-3 py-1.5 rounded-full flex items-center gap-2 border border-slate-200">
+                            <span class="text-sm font-semibold">{{ cat }}</span>
+                            <button @click="removeCategory(index)" class="text-slate-400 hover:text-red-500"><i data-lucide="x" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tombol Berbahaya -->
+                <div class="p-8 rounded-2xl border-2 border-red-100 bg-red-50 space-y-4">
+                    <h3 class="text-red-600 font-bold flex items-center gap-2"><i data-lucide="alert-triangle"></i> Area Berbahaya</h3>
+                    <button @click="resetAllData" class="w-full bg-white border-2 border-red-500 text-red-500 py-3 rounded-xl font-bold hover:bg-red-500 hover:text-white transition-all">
+                        Reset Seluruh Database Tamu
+                    </button>
                 </div>
             </section>
 
@@ -325,14 +335,16 @@
 
     createApp({
         setup() {
+            // URL Google Apps Script Anda
             const DATABASE_URL = 'https://script.google.com/macros/s/AKfycbwZs8Pkk1dPnIeTuIwcPLa01_d7zUhknHiQCgUrYggXTsaFQRuTvw2X9bXuGCidJ9J0Jg/exec';
 
             const activeTab = ref('beranda');
-            const dbFilter = ref('all');
             const guests = ref([]);
             const maxGuests = ref(500);
             const currentTheme = ref('modern');
             const categories = ref(['Keluarga', 'Teman', 'VVIP', 'Rekan Kerja']);
+            const newCategory = ref('');
+
             const showNotification = ref(false);
             const notificationMessage = ref('Data Berhasil Disimpan!');
             const isSelfCheckIn = ref(false);
@@ -365,10 +377,31 @@
                 return categories.value.map(c => ({ name: c, count: guests.value.filter(g => g.kategori === c).length }));
             });
 
-            const filteredGuests = computed(() => {
-                if (dbFilter.value === 'all') return guests.value;
-                return guests.value.filter(g => g.kategori === dbFilter.value);
-            });
+            const addCategory = () => {
+                const val = newCategory.value.trim();
+                if (val && !categories.value.includes(val)) {
+                    categories.value.push(val);
+                    newCategory.value = '';
+                    saveSettings();
+                }
+            };
+
+            const removeCategory = (index) => {
+                if(categories.value.length > 1) {
+                    categories.value.splice(index, 1);
+                    saveSettings();
+                }
+            };
+
+            const saveSettings = () => {
+                localStorage.setItem('ar_wedding_categories', JSON.stringify(categories.value));
+            };
+
+            const loadSettings = () => {
+                const saved = localStorage.getItem('ar_wedding_categories');
+                if (saved) categories.value = JSON.parse(saved);
+                form.value.kategori = categories.value[0];
+            };
 
             const loadGuests = async () => {
                 try {
@@ -376,10 +409,10 @@
                     const data = await response.json();
                     guests.value = data.reverse().map(g => ({
                         ...g,
-                        id: g.id || Date.now() + Math.random()
+                        id: g.id || Math.random()
                     }));
                 } catch (e) {
-                    console.error("Gagal memuat data.");
+                    console.error("Gagal sinkronisasi database.");
                 }
             };
 
@@ -393,37 +426,29 @@
                     time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
                 };
 
-                try {
-                    // Update tampilan lokal
-                    guests.value.unshift({ id: Date.now(), ...newGuest });
-                    
-                    // Notifikasi khusus tamu vs admin
-                    if(isSelfCheckIn.value) {
-                        notificationMessage.value = 'Terima kasih! Kehadiran Anda telah tercatat.';
-                    } else {
-                        notificationMessage.value = 'Data Berhasil Disimpan!';
-                    }
-                    
-                    showNotification.value = true;
-                    setTimeout(() => { showNotification.value = false; }, 4000);
+                // Optimistic UI update
+                guests.value.unshift({ id: Date.now(), ...newGuest });
+                
+                notificationMessage.value = isSelfCheckIn.value ? 'Terima kasih, kehadiran Anda tercatat!' : 'Data Berhasil Disimpan!';
+                showNotification.value = true;
+                setTimeout(() => { showNotification.value = false; }, 4000);
 
-                    // Kirim ke database
+                try {
                     await fetch(DATABASE_URL, {
                         method: 'POST',
                         mode: 'no-cors',
                         body: JSON.stringify({ action: 'insert', ...newGuest })
                     });
                     
-                    // Reset formulir
-                    form.value = { nama: '', hp: '', alamat: '', kategori: 'Keluarga', ucapan: '' };
+                    form.value = { ...form.value, nama: '', hp: '', alamat: '', ucapan: '' };
                     nextTick(() => lucide.createIcons());
                 } catch (e) {
-                    console.error("Error submitting guest");
+                    console.error("Gagal mengirim ke Google Sheets");
                 }
             };
 
             const deleteGuest = async (id) => { 
-                if(confirm("Hapus tamu ini?")) {
+                if(confirm("Hapus data tamu ini?")) {
                     const guestToDelete = guests.value.find(g => g.id === id);
                     guests.value = guests.value.filter(g => g.id !== id);
                     
@@ -432,24 +457,21 @@
                         mode: 'no-cors',
                         body: JSON.stringify({ action: 'delete', nama: guestToDelete.nama })
                     });
-                    
-                    nextTick(() => lucide.createIcons());
                 }
             };
 
             const resetAllData = async () => {
-                const password = prompt("Konfirmasi Reset: Masukkan nama mempelai pria (contoh: Andi) untuk menghapus seluruh database:");
-                if(password && password.toLowerCase() === weddingInfo.mempelai.split(' ')[0].toLowerCase()) {
+                const confirmInput = prompt("Ketik 'HAPUS' untuk mengosongkan database:");
+                if(confirmInput === 'HAPUS') {
                     await fetch(DATABASE_URL, {
                         method: 'POST',
                         mode: 'no-cors',
                         body: JSON.stringify({ action: 'reset' })
                     });
                     guests.value = [];
-                    notificationMessage.value = 'Database Berhasil Dikosongkan!';
+                    notificationMessage.value = 'Database Dikosongkan!';
                     showNotification.value = true;
                     setTimeout(() => { showNotification.value = false; }, 3000);
-                    nextTick(() => lucide.createIcons());
                 }
             };
 
@@ -462,17 +484,16 @@
                         text: selfCheckInURL.value,
                         width: 256,
                         height: 256,
-                        colorDark: "#0f172a",
+                        colorDark: "#000000",
                         colorLight: "#ffffff",
                         correctLevel: QRCode.CorrectLevel.H
                     });
-                    lucide.createIcons();
                 });
             };
 
             const copyURL = () => {
                 navigator.clipboard.writeText(selfCheckInURL.value);
-                notificationMessage.value = "URL disalin ke clipboard!";
+                notificationMessage.value = "Link berhasil disalin!";
                 showNotification.value = true;
                 setTimeout(() => showNotification.value = false, 2000);
             };
@@ -480,18 +501,17 @@
             const exportToPDF = () => {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                doc.setFontSize(18);
-                doc.text(`LAPORAN BUKU TAMU: ${weddingInfo.mempelai}`, 14, 15);
+                doc.text(`LAPORAN TAMU: ${weddingInfo.mempelai}`, 14, 15);
                 doc.autoTable({
                     startY: 25,
                     head: [['No', 'Waktu', 'Nama', 'Kategori', 'WhatsApp']],
                     body: guests.value.map((g, i) => [i + 1, g.time, g.nama, g.kategori, g.hp]),
-                    headStyles: { fillColor: [71, 85, 105] }
                 });
-                doc.save(`Laporan_Tamu.pdf`);
+                doc.save(`Daftar_Hadir.pdf`);
             };
 
             onMounted(() => {
+                loadSettings();
                 const params = new URLSearchParams(window.location.search);
                 if (params.get('mode') === 'checkin') isSelfCheckIn.value = true;
                 loadGuests();
@@ -503,11 +523,12 @@
             });
 
             return {
-                activeTab, dbFilter, guests, maxGuests, currentTheme,
-                categories, showNotification, notificationMessage, isSelfCheckIn, form, weddingInfo,
-                themeOptions, theme, statsPerCategory, filteredGuests, 
+                activeTab, guests, maxGuests, currentTheme,
+                categories, newCategory, showNotification, notificationMessage, isSelfCheckIn, form, weddingInfo,
+                themeOptions, theme, statsPerCategory, 
                 submitGuest, deleteGuest, resetAllData, exportToPDF,
-                showQRModal, selfCheckInURL, generateQR, copyURL
+                showQRModal, selfCheckInURL, generateQR, copyURL,
+                addCategory, removeCategory
             };
         }
     }).mount('#app');
